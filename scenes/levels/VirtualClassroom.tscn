@@ -1,0 +1,50 @@
+[gd_scene format=3 uid="uid://d2tosat0xs0r3"]
+
+[ext_resource type="Script" uid="uid://hcowjyyu72t1" path="res://scripts/levels/VirtualClassroom.gd" id="1_class"]
+[ext_resource type="Script" uid="uid://d2hmottbskk3r" path="res://scripts/levels/ClassroomDecor.gd" id="2_decor"]
+[ext_resource type="PackedScene" path="res://scenes/learner/Learner.tscn" id="3_learner"]
+[ext_resource type="PackedScene" path="res://scenes/virtual_artist/VirtualArtist.tscn" id="4_artist"]
+[ext_resource type="PackedScene" path="res://scenes/interactables/InstrumentStation.tscn" id="5_station"]
+[ext_resource type="Script" uid="uid://dsbounp23vw2l" path="res://scripts/ui/GameShellUI.gd" id="6_shell"]
+[ext_resource type="PackedScene" uid="uid://bimdvpwm5qrch" path="res://scenes/ui/PracticeUI.tscn" id="7_practice"]
+
+[node name="VirtualClassroom" type="Node2D" unique_id=1629297876]
+y_sort_enabled = true
+script = ExtResource("1_class")
+
+[node name="Background" type="Sprite2D" parent="." unique_id=1694719954]
+modulate = Color(0.42, 0.29, 0.2, 0.38)
+position = Vector2(576, 324)
+
+[node name="ClassroomDecor" type="Node2D" parent="." unique_id=2055496632]
+script = ExtResource("2_decor")
+
+[node name="TileMap" type="TileMap" parent="." unique_id=531115902]
+format = 2
+
+[node name="InstrumentStation_DanTranh" parent="." unique_id=2068846444 instance=ExtResource("5_station")]
+position = Vector2(264, 512)
+hotspot_state = "in_progress"
+
+[node name="InstrumentStation_SaoTruc" parent="." unique_id=1310883387 instance=ExtResource("5_station")]
+position = Vector2(888, 512)
+instrument_name = "sao_truc"
+
+[node name="VirtualArtist" parent="." unique_id=1599001041 instance=ExtResource("4_artist")]
+position = Vector2(660, 346)
+
+[node name="Learner" parent="." unique_id=1058650341 instance=ExtResource("3_learner")]
+position = Vector2(576, 560)
+
+[node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=1798836964]
+
+[node name="GameShellUI" type="Control" parent="CanvasLayer" unique_id=1193355079]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("6_shell")
+
+[node name="PracticeUI" parent="CanvasLayer" unique_id=200395756 instance=ExtResource("7_practice")]

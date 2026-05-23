@@ -1,0 +1,25 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/interactables/InstrumentStation.gd" id="1_abc"]
+[ext_resource type="Texture2D" path="res://icon.svg" id="2_def"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_1"]
+size = Vector2(128, 64)
+
+[node name="InstrumentStation" type="Area2D"]
+script = ExtResource("1_abc")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_1")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+modulate = Color(0.8, 0.6, 0.2, 1)
+texture = ExtResource("2_def")
+
+[node name="InteractionLabel" type="Label" parent="."]
+offset_left = -100.0
+offset_top = -80.0
+offset_right = 100.0
+offset_bottom = -54.0
+text = "Press 'E' to practice"
+horizontal_alignment = 1
