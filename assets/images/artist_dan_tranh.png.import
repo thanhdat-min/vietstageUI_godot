@@ -2,12 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://gsrugfkasrb2"
-valid=false
+uid="uid://dguf8u2e8d4qk"
+path="res://.godot/imported/artist_dan_tranh.png-7206bd980fb4ebfa1409960238187379.ctex"
+metadata={
+"vram_texture": false
+}
 
 [deps]
 
 source_file="res://assets/images/artist_dan_tranh.png"
+dest_files=["res://.godot/imported/artist_dan_tranh.png-7206bd980fb4ebfa1409960238187379.ctex"]
 
 [params]
 

@@ -115,8 +115,10 @@ func _draw_artist_platform() -> void:
 	draw_arc(Vector2(660, 362), 72.0, 0.0, TAU, 56, Color(BRASS, 0.25), 2.0)
 
 func _draw_instrument_pedestals() -> void:
-	_draw_station_base(Vector2(264, 512), BRASS, "DAN TRANH")
-	_draw_station_base(Vector2(888, 512), JADE, "SAO TRUC")
+	_draw_station_base(Vector2(200, 520), BRASS, "DAN TRANH")
+	_draw_station_base(Vector2(320, 420), BRASS, "DAN BAU")
+	_draw_station_base(Vector2(952, 520), JADE, "SAO TRUC")
+	_draw_station_base(Vector2(832, 420), JADE, "TRONG")
 
 func _draw_station_base(center: Vector2, accent: Color, _label_text: String) -> void:
 	var base: PackedVector2Array = PackedVector2Array([
@@ -131,39 +133,39 @@ func _draw_station_base(center: Vector2, accent: Color, _label_text: String) -> 
 	draw_arc(center, 54.0, 0.0, TAU, 44, Color(accent, 0.14), 1.5)
 
 func _draw_lesson_board() -> void:
-	var rect := Rect2(386, 42, 380, 134)
-	draw_rect(rect, Color("321a13"), true)
+	var rect := Rect2(386, 92, 380, 144)
+	draw_rect(rect, Color("20100d", 0.94), true)
 	draw_rect(rect, BRASS, false, 3.0)
-	draw_line(Vector2(416, 102), Vector2(736, 102), Color(BRASS, 0.32), 2.0)
-	draw_line(Vector2(416, 134), Vector2(688, 134), Color(BRASS, 0.22), 2.0)
-	_draw_bronze_drum(Vector2(576, 198), 34.0, 0.28)
+	draw_line(Vector2(416, 172), Vector2(736, 172), Color(BRASS, 0.32), 2.0)
+	draw_line(Vector2(416, 204), Vector2(688, 204), Color(BRASS, 0.22), 2.0)
+	_draw_bronze_drum(Vector2(576, 262), 34.0, 0.28)
 
 func _draw_badge_shelf() -> void:
-	draw_rect(Rect2(82, 166, 250, 62), Color("351d15"), true)
-	draw_rect(Rect2(82, 166, 250, 62), Color(BRASS, 0.42), false, 2.0)
-	draw_rect(Rect2(68, 228, 278, 18), BRASS_SOFT, true)
+	draw_rect(Rect2(82, 196, 250, 62), Color("351d15"), true)
+	draw_rect(Rect2(82, 196, 250, 62), Color(BRASS, 0.42), false, 2.0)
+	draw_rect(Rect2(68, 258, 278, 18), BRASS_SOFT, true)
 	for i in range(5):
-		var center := Vector2(116 + i * 48, 198)
+		var center := Vector2(116 + i * 48, 228)
 		draw_circle(center, 13, Color(0.66, 0.54, 0.32, 0.85))
 		draw_arc(center, 10, 0, TAU, 24, Color(BRASS, 0.55), 1.5)
 
 func _draw_weekly_rank() -> void:
-	draw_rect(Rect2(830, 166, 242, 84), Color("351d15"), true)
-	draw_rect(Rect2(830, 166, 242, 84), Color(JADE, 0.6), false, 2.5)
+	draw_rect(Rect2(830, 196, 242, 84), Color("351d15"), true)
+	draw_rect(Rect2(830, 196, 242, 84), Color(JADE, 0.6), false, 2.5)
 	for i in range(3):
-		var center := Vector2(876 + i * 62, 206)
+		var center := Vector2(876 + i * 62, 236)
 		draw_circle(center, 18, Color(0.84, 0.45, 0.19, 0.9))
 		draw_arc(center, 14, 0, TAU, 26, BRASS, 1.5)
 
 func _draw_walk_paths() -> void:
 	draw_polyline(PackedVector2Array([
-		Vector2(576, 572), Vector2(264, 512), Vector2(576, 382), Vector2(888, 512), Vector2(576, 572)
+		Vector2(576, 572), Vector2(200, 520), Vector2(320, 420), Vector2(576, 382), Vector2(832, 420), Vector2(952, 520), Vector2(576, 572)
 	]), Color(0.95, 0.69, 0.25, 0.22), 3.0)
 	draw_line(Vector2(576, 572), Vector2(660, 362), Color(JADE, 0.16), 3.0)
 
 func _draw_foreground_depth() -> void:
 	draw_colored_polygon(PackedVector2Array([
-		Vector2(60, 502), Vector2(576, 718), Vector2(1092, 502), Vector2(1152, 648), Vector2(0, 648)
+		Vector2(0, 648), Vector2(60, 502), Vector2(576, 718), Vector2(1092, 502), Vector2(1152, 648), Vector2(1152, 720), Vector2(0, 720)
 	]), Color(FLOOR_SHADOW, 0.36))
 	draw_line(Vector2(0, 646), Vector2(1152, 646), Color(BRASS, 0.25), 2.0)
 
@@ -181,13 +183,11 @@ func _draw_hanging_lantern(center: Vector2, color: Color) -> void:
 	draw_arc(center, 15, 0.0, TAU, 28, Color(CREAM, 0.32), 1.5)
 
 func _add_labels() -> void:
-	_add_room_label("VIRTUAL MUSIC ROOM", Vector2(456, 22), 18, BRASS)
-	_add_room_label("LESSON BOARD", Vector2(438, 70), 17, CREAM)
-	_add_room_label("BADGES", Vector2(104, 146), 15, MUTED)
-	_add_room_label("WEEKLY RANK", Vector2(872, 146), 15, MUTED)
-	_add_room_label("Dan Tranh", Vector2(220, 586), 14, BRASS)
-	_add_room_label("Sao Truc", Vector2(840, 586), 14, JADE)
-	_add_room_label("Tap / press E on glowing hotspots", Vector2(438, 674), 14, CREAM)
+	_add_room_label("VIRTUAL MUSIC ROOM", Vector2(462, 104), 18, BRASS)
+	_add_room_label("LESSON BOARD", Vector2(504, 138), 14, CREAM)
+	_add_room_label("BADGES", Vector2(174, 170), 15, MUTED)
+	_add_room_label("WEEKLY RANK", Vector2(892, 170), 15, MUTED)
+	_add_room_label("Tap / press E on glowing hotspots", Vector2(438, 680), 14, CREAM)
 
 func _add_room_label(text: String, pos: Vector2, size: int, color: Color = CREAM) -> void:
 	var label := Label.new()

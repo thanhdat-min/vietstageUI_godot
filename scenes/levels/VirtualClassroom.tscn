@@ -7,6 +7,7 @@
 [ext_resource type="PackedScene" path="res://scenes/interactables/InstrumentStation.tscn" id="5_station"]
 [ext_resource type="Script" uid="uid://dsbounp23vw2l" path="res://scripts/ui/GameShellUI.gd" id="6_shell"]
 [ext_resource type="PackedScene" uid="uid://bimdvpwm5qrch" path="res://scenes/ui/PracticeUI.tscn" id="7_practice"]
+[ext_resource type="PackedScene" uid="uid://wfvn3um5weqq" path="res://scenes/ui/MiniGameUI.tscn" id="8_minigame"]
 
 [node name="VirtualClassroom" type="Node2D" unique_id=1629297876]
 y_sort_enabled = true
@@ -23,12 +24,21 @@ script = ExtResource("2_decor")
 format = 2
 
 [node name="InstrumentStation_DanTranh" parent="." unique_id=2068846444 instance=ExtResource("5_station")]
-position = Vector2(264, 512)
+position = Vector2(200, 520)
 hotspot_state = "in_progress"
 
+[node name="InstrumentStation_DanBau" parent="." unique_id=2068846445 instance=ExtResource("5_station")]
+position = Vector2(320, 420)
+instrument_name = "dan_bau"
+
 [node name="InstrumentStation_SaoTruc" parent="." unique_id=1310883387 instance=ExtResource("5_station")]
-position = Vector2(888, 512)
+position = Vector2(952, 520)
 instrument_name = "sao_truc"
+
+[node name="InstrumentStation_Trong" parent="." unique_id=1310883388 instance=ExtResource("5_station")]
+position = Vector2(832, 420)
+instrument_name = "trong"
+hotspot_state = "locked"
 
 [node name="VirtualArtist" parent="." unique_id=1599001041 instance=ExtResource("4_artist")]
 position = Vector2(660, 346)
@@ -48,3 +58,5 @@ grow_vertical = 2
 script = ExtResource("6_shell")
 
 [node name="PracticeUI" parent="CanvasLayer" unique_id=200395756 instance=ExtResource("7_practice")]
+
+[node name="MiniGameUI" parent="CanvasLayer" unique_id=300495857 instance=ExtResource("8_minigame")]
