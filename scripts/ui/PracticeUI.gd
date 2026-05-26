@@ -1,19 +1,23 @@
 extends Control
 class_name PracticeUI
 
+@onready var font_reg: Font = load("res://assets/fonts/Inter-Regular.ttf")
+@onready var font_bold: Font = load("res://assets/fonts/Inter-SemiBold.ttf")
+
 signal practice_finished(result: Dictionary)
 signal practice_cancelled
 
 # ── Colour palette ──────────────────────────────────────────────────────────
-const WOOD_DARK  := Color("24130d")
-const WOOD_PANEL := Color("3b2318")
-const BRASS      := Color("d7a84a")
-const BRASS_DIM  := Color("9c7230")
-const JADE       := Color("1f9a8a")
-const SON_RED    := Color("8d2f22")
-const CREAM      := Color("f4dfb8")
-const MUTED      := Color("c8af83")
-const SUCCESS    := Color("3ec97a")
+const WOOD_DARK  := Color("281006") # Mahogany Canvas
+const WOOD_PANEL := Color("402011") # Burnt Sienna
+const BRASS      := Color("faae33") # Curry Yellow
+const BRASS_DIM  := Color("823513") # Spiced Orange
+const JADE       := Color("faae33") # Curry Yellow
+const SON_RED    := Color("d1255c") # Chili Red
+const CREAM      := Color("ffffff") # Crisp White
+const MUTED      := Color("9f531b") # Cinnamon Brown / Muted
+const SUCCESS    := Color("faae33") # Curry Yellow
+const STAR_GOLD  := Color("f0c840")
 
 # ── Session state ───────────────────────────────────────────────────────────
 var lesson: Dictionary = {}
@@ -44,6 +48,14 @@ var pitch_hint: Label
 var progress_bar: ProgressBar
 var pause_button: Button
 
+# ── Compact mobile HUD nodes ────────────────────────────────────────────────
+var compact_hud: PanelContainer
+var compact_score_lbl: Label
+var compact_combo_lbl: Label
+var compact_acc_lbl: Label
+var compact_stars_lbl: Label
+
+
 # ── Enhanced nodes ──────────────────────────────────────────────────────────
 var breath_panel: PanelContainer     # sáo trúc only
 var breath_bar: ProgressBar
@@ -63,6 +75,10 @@ func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_build_hud()
 	hide()
+	get_viewport().size_changed.connect(_apply_responsive_layout)
+	_apply_responsive_layout()
+	get_viewport().size_changed.connect(_apply_responsive_layout)
+	_apply_responsive_layout()
 
 func _process(delta: float) -> void:
 	if not active:
@@ -90,9 +106,9 @@ func start_practice(new_lesson: Dictionary = {}) -> void:
 	show()
 	var instrument: String = lesson.get("instrument", "dan_tranh")
 	top_title.text = "%s  —  %s  —  %s" % [
-		lesson.get("title", "Practice Mode"),
+		lesson.get("title", "Chế độ Luyện tập"),
 		_instrument_title(instrument),
-		lesson.get("difficulty", "Beginner")
+		_difficulty_title(lesson.get("difficulty", "Beginner"))
 	]
 	timer_label.text = "00:00"
 	feedback_label.text = "Get Ready"
@@ -183,13 +199,13 @@ func update_pitch(pitch_diff_cents: float) -> void:
 	var mapped_value: float = clamp(50.0 + pitch_diff_cents, 0.0, 100.0)
 	pitch_bar.value = mapped_value
 	if abs(pitch_diff_cents) < 10:
-		pitch_hint.text = "▲ In Tune"
+		pitch_hint.text = "▲ Đúng nốt"
 		pitch_hint.modulate = JADE
 	elif pitch_diff_cents < 0:
-		pitch_hint.text = "▼ Flat"
+		pitch_hint.text = "▼ Thấp (Flat)"
 		pitch_hint.modulate = BRASS
 	else:
-		pitch_hint.text = "▲ Sharp"
+		pitch_hint.text = "▲ Cao (Sharp)"
 		pitch_hint.modulate = SON_RED
 	# Update pitch arrow
 	if is_instance_valid(pitch_arrow):
@@ -198,7 +214,11 @@ func update_pitch(pitch_diff_cents: float) -> void:
 
 func update_accuracy(score_percentage: float) -> void:
 	accuracy = score_percentage
-	accuracy_label.text = "Accuracy  %d%%" % int(score_percentage)
+	accuracy_label.text = "Độ chính xác  %d%%" % int(score_percentage)
+	if is_instance_valid(compact_acc_lbl):
+		compact_acc_lbl.text = "Chính xác: %d%%" % int(score_percentage)
+	if is_instance_valid(compact_acc_lbl):
+		compact_acc_lbl.text = "Chính xác: %d%%" % int(score_percentage)
 
 func show_feedback(text: String, is_positive: bool) -> void:
 	feedback_label.text = text
@@ -403,6 +423,25 @@ func _build_hud() -> void:
 	feedback_label.offset_bottom = -104
 	add_child(feedback_label)
 
+	# ── Compact Mobile HUD (hidden by default) ────────────────────────────────
+	compact_hud = PanelContainer.new()
+	compact_hud.name = "CompactMobileHUD"
+	compact_hud.add_theme_stylebox_override("panel", _panel_style(Color(0.08, 0.045, 0.035, 0.95), Color(0.25, 0.16, 0.09), 8))
+	var ch_row := HBoxContainer.new()
+	ch_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	ch_row.add_theme_constant_override("separation", 24)
+	compact_hud.add_child(ch_row)
+	compact_score_lbl = _label("Điểm: 0", 16, CREAM)
+	ch_row.add_child(compact_score_lbl)
+	compact_combo_lbl = _label("Combo: x0", 16, JADE)
+	ch_row.add_child(compact_combo_lbl)
+	compact_acc_lbl = _label("Chính xác: 0%", 16, BRASS)
+	ch_row.add_child(compact_acc_lbl)
+	compact_stars_lbl = _label("☆☆☆", 18, STAR_GOLD)
+	ch_row.add_child(compact_stars_lbl)
+	add_child(compact_hud)
+
+
 # ─── Enhanced visual builders ────────────────────────────────────────────────
 func _build_pitch_arrow() -> Control:
 	var node := Control.new()
@@ -511,7 +550,7 @@ func _update_breath(level: float) -> void:
 			breath_label.text = "Too strong"
 			breath_label.modulate = SON_RED
 		elif level > 0.35:
-			breath_label.text = "Steady ✓"
+			breath_label.text = "Ổn định ✓"
 			breath_label.modulate = JADE
 		else:
 			breath_label.text = "Too weak"
@@ -531,6 +570,20 @@ func _update_score_panel() -> void:
 	elif accuracy >= 70:
 		projected = 2
 	stars_label.text = _stars(projected)
+	
+	if is_instance_valid(compact_score_lbl):
+		compact_score_lbl.text = "Điểm: %d" % score
+	if is_instance_valid(compact_combo_lbl):
+		compact_combo_lbl.text = "Combo: x%d" % combo
+	if is_instance_valid(compact_stars_lbl):
+		compact_stars_lbl.text = _stars(projected)
+	
+	if is_instance_valid(compact_score_lbl):
+		compact_score_lbl.text = "Điểm: %d" % score
+	if is_instance_valid(compact_combo_lbl):
+		compact_combo_lbl.text = "Combo: x%d" % combo
+	if is_instance_valid(compact_stars_lbl):
+		compact_stars_lbl.text = _stars(projected)
 
 # ─── Style helpers ───────────────────────────────────────────────────────────
 func _meter(color: Color) -> ProgressBar:
@@ -554,6 +607,8 @@ func _label(text: String, size: int, color: Color, align := HORIZONTAL_ALIGNMENT
 	label.horizontal_alignment = align
 	label.add_theme_font_size_override("font_size", size)
 	label.add_theme_color_override("font_color", color)
+	if font_reg:
+		label.add_theme_font_override("font", font_reg)
 	return label
 
 func _button(text: String, bg: Color, fg: Color) -> Button:
@@ -561,9 +616,9 @@ func _button(text: String, bg: Color, fg: Color) -> Button:
 	button.text = text
 	button.custom_minimum_size = Vector2(110, 42)
 	button.add_theme_color_override("font_color", fg)
-	button.add_theme_stylebox_override("normal",  _panel_style(bg, bg.lightened(0.16), 8))
-	button.add_theme_stylebox_override("hover",   _panel_style(bg.lightened(0.1), BRASS, 8))
-	button.add_theme_stylebox_override("pressed", _panel_style(bg.darkened(0.12), BRASS, 8))
+	button.add_theme_stylebox_override("normal",  _panel_style(bg, bg.lightened(0.16), 1296))
+	button.add_theme_stylebox_override("hover",   _panel_style(bg.lightened(0.1), BRASS, 1296))
+	button.add_theme_stylebox_override("pressed", _panel_style(bg.darkened(0.12), BRASS, 1296))
 	return button
 
 func _panel_style(bg: Color, border: Color, radius: int) -> StyleBoxFlat:
@@ -571,7 +626,10 @@ func _panel_style(bg: Color, border: Color, radius: int) -> StyleBoxFlat:
 	style.bg_color = bg
 	style.border_color = border
 	style.set_border_width_all(2)
-	style.set_corner_radius_all(radius)
+	var target_radius := radius
+	if radius != 1296 and radius != 1224 and radius != 1152 and radius != 1080:
+		target_radius = 6
+	style.set_corner_radius_all(target_radius)
 	style.content_margin_left   = 14
 	style.content_margin_right  = 14
 	style.content_margin_top    = 12
@@ -606,3 +664,83 @@ func _stars(count: int) -> String:
 func _format_time(seconds: float) -> String:
 	var total: int = int(seconds)
 	return "%02d:%02d" % [total / 60, total % 60]
+
+
+# ── Helper for difficulty translation ──
+func _difficulty_title(diff_str: String) -> String:
+	match diff_str:
+		"Beginner": return "Cơ bản"
+		"Intermediate": return "Trung cấp"
+		"Advanced": return "Nâng cao"
+		_: return diff_str
+
+func _apply_responsive_layout() -> void:
+	var sz := get_viewport().get_visible_rect().size
+	var w := sz.x
+	var h := sz.y
+	var desktop := w >= 800
+	
+	var left_panel: Node = find_child("AccuracyMeter", true, false)
+	var right_panel: Node = find_child("ScorePanel", true, false)
+	
+	# Co giãn làn chạy nhạc (rhythm lane)
+	if is_instance_valid(rhythm_lane):
+		var lane_w: float = min(620.0, w - 24.0)
+		rhythm_lane.custom_minimum_size = Vector2(lane_w, 146)
+		rhythm_lane.offset_left = -lane_w * 0.5
+		rhythm_lane.offset_right = lane_w * 0.5
+		
+	if desktop:
+		if left_panel: (left_panel as Control).show()
+		if right_panel: (right_panel as Control).show()
+		if is_instance_valid(compact_hud): compact_hud.hide()
+		
+		# Căn vị trí làn chạy nhạc ở tâm
+		if is_instance_valid(rhythm_lane):
+			rhythm_lane.offset_top = -73
+			rhythm_lane.offset_bottom = 73
+			
+		if is_instance_valid(progress_bar):
+			progress_bar.offset_left = 290
+			progress_bar.offset_right = -290
+			progress_bar.offset_top = -88
+			progress_bar.offset_bottom = -64
+			
+		if is_instance_valid(feedback_label):
+			feedback_label.offset_left = 290
+			feedback_label.offset_right = -290
+			feedback_label.offset_top = -158
+			feedback_label.offset_bottom = -104
+			
+		if is_instance_valid(waveform_strip):
+			waveform_strip.show()
+	else:
+		if left_panel: (left_panel as Control).hide()
+		if right_panel: (right_panel as Control).hide()
+		if is_instance_valid(compact_hud):
+			compact_hud.show()
+			compact_hud.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
+			compact_hud.offset_left = 12
+			compact_hud.offset_right = -12
+			compact_hud.offset_top = -168
+			compact_hud.offset_bottom = -120
+			
+		# Di chuyển làn chạy nhạc cao hơn để nhường chỗ cho compact HUD và progress
+		if is_instance_valid(rhythm_lane):
+			rhythm_lane.offset_top = -140
+			rhythm_lane.offset_bottom = 6
+			
+		if is_instance_valid(progress_bar):
+			progress_bar.offset_left = 18
+			progress_bar.offset_right = -18
+			progress_bar.offset_top = -98
+			progress_bar.offset_bottom = -82
+			
+		if is_instance_valid(feedback_label):
+			feedback_label.offset_left = 18
+			feedback_label.offset_right = -18
+			feedback_label.offset_top = -236
+			feedback_label.offset_bottom = -182
+			
+		if is_instance_valid(waveform_strip):
+			waveform_strip.hide() # ẩn thanh sóng phụ để đỡ chật chội

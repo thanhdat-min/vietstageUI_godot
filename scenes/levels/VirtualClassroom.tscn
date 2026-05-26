@@ -1,11 +1,11 @@
 [gd_scene format=3 uid="uid://d2tosat0xs0r3"]
 
-[ext_resource type="Script" uid="uid://hcowjyyu72t1" path="res://scripts/levels/VirtualClassroom.gd" id="1_class"]
-[ext_resource type="Script" uid="uid://d2hmottbskk3r" path="res://scripts/levels/ClassroomDecor.gd" id="2_decor"]
+[ext_resource type="Script" uid="uid://kjsnvjif3cs5" path="res://scripts/levels/VirtualClassroom.gd" id="1_class"]
+[ext_resource type="Script" uid="uid://wlro2qsgaoki" path="res://scripts/levels/ClassroomDecor.gd" id="2_decor"]
 [ext_resource type="PackedScene" path="res://scenes/learner/Learner.tscn" id="3_learner"]
 [ext_resource type="PackedScene" path="res://scenes/virtual_artist/VirtualArtist.tscn" id="4_artist"]
 [ext_resource type="PackedScene" path="res://scenes/interactables/InstrumentStation.tscn" id="5_station"]
-[ext_resource type="Script" uid="uid://dsbounp23vw2l" path="res://scripts/ui/GameShellUI.gd" id="6_shell"]
+[ext_resource type="Script" uid="uid://bex27oegbsnjf" path="res://scripts/ui/GameShellUI.gd" id="6_shell"]
 [ext_resource type="PackedScene" uid="uid://bimdvpwm5qrch" path="res://scenes/ui/PracticeUI.tscn" id="7_practice"]
 [ext_resource type="PackedScene" uid="uid://wfvn3um5weqq" path="res://scenes/ui/MiniGameUI.tscn" id="8_minigame"]
 

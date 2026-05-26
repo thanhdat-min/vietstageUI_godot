@@ -1,6 +1,9 @@
 extends Control
 class_name GameShellUI
 
+@onready var font_reg: Font = load("res://assets/fonts/Inter-Regular.ttf")
+@onready var font_bold: Font = load("res://assets/fonts/Inter-SemiBold.ttf")
+
 # ── Signals ─────────────────────────────────────────────────────────────────
 signal request_enter_room
 signal request_start_demo(lesson: Dictionary)
@@ -11,14 +14,14 @@ signal request_next_lesson
 signal request_start_minigame(type: int)
 
 # ── Colour palette ───────────────────────────────────────────────────────────
-const WOOD_DARK   := Color("24130d")
-const WOOD_PANEL  := Color("3b2318")
-const BRASS       := Color("d7a84a")
-const BRASS_DIM   := Color("9c7230")
-const JADE        := Color("1f9a8a")
-const SON_RED     := Color("8d2f22")
-const CREAM       := Color("f4dfb8")
-const MUTED       := Color("c8af83")
+const WOOD_DARK   := Color("281006") # Mahogany Canvas
+const WOOD_PANEL  := Color("402011") # Burnt Sienna
+const BRASS       := Color("faae33") # Curry Yellow
+const BRASS_DIM   := Color("823513") # Spiced Orange
+const JADE        := Color("faae33") # Curry Yellow
+const SON_RED     := Color("d1255c") # Chili Red
+const CREAM       := Color("ffffff") # Crisp White
+const MUTED       := Color("9f531b") # Cinnamon Brown / Muted
 const SHADOW      := Color(0.03, 0.02, 0.015, 0.78)
 const STAR_GOLD   := Color("f0c840")
 const SUCCESS     := Color("3ec97a")
@@ -63,6 +66,27 @@ var title_label:       Label
 var lesson_list:       VBoxContainer
 var leaderboard_list:  VBoxContainer
 var badges_grid:       GridContainer
+var dashboard_scroll:  ScrollContainer
+var dashboard_main:    VBoxContainer
+var dashboard_cards:   GridContainer
+var dashboard_lower:   GridContainer
+var daily_challenge_main: GridContainer
+var login_card:        PanelContainer
+
+# ── Simply Guitar roadmap variables ──────────────────────────────────────────
+var all_lessons:           Array = []
+var selected_instrument:   String = "dan_tranh"
+var current_dashboard_tab: String = "courses"
+var roadmap_scroll:        ScrollContainer
+var roadmap_row:           HBoxContainer
+var left_nav_bar:          PanelContainer
+var tab_btn_courses:       Button
+var tab_btn_library:       Button
+var tab_btn_games:         Button
+var tab_btn_room:          Button
+var inst_selector_row:     HBoxContainer
+var dashboard_games_panel: PanelContainer
+var games_vbox:            VBoxContainer
 
 # ── Result sub-nodes ─────────────────────────────────────────────────────────
 var result_title:     Label
@@ -382,177 +406,281 @@ func _build_dashboard_screen() -> void:
 	shade.color = SHADOW
 	dashboard.add_child(shade)
 
-	# ── Left sidebar ───────────────────────────────────────────────────────────
-	var sidebar := PanelContainer.new()
-	sidebar.name = "ProfileSidebar"
-	sidebar.set_anchors_preset(Control.PRESET_LEFT_WIDE)
-	sidebar.offset_left   = 20
-	sidebar.offset_top    = 20
-	sidebar.offset_right  = 316
-	sidebar.offset_bottom = -20
-	sidebar.add_theme_stylebox_override("panel", _panel_style(Color(0.1, 0.055, 0.035, 0.96), BRASS_DIM, 10))
-	dashboard.add_child(sidebar)
+	# ── Left slim navigation (LeftNav) ──
+	left_nav_bar = PanelContainer.new()
+	left_nav_bar.name = "LeftNavBar"
+	left_nav_bar.set_anchors_preset(Control.PRESET_LEFT_WIDE)
+	left_nav_bar.offset_left = 0
+	left_nav_bar.offset_top = 0
+	left_nav_bar.offset_right = 104
+	left_nav_bar.offset_bottom = 0
+	left_nav_bar.add_theme_stylebox_override("panel", _panel_style(Color(0.1, 0.05, 0.035, 0.98), Color(0.25, 0.16, 0.09), 0))
+	dashboard.add_child(left_nav_bar)
 
-	var side_box := VBoxContainer.new()
-	side_box.add_theme_constant_override("separation", 13)
-	sidebar.add_child(side_box)
+	var nav_margin := MarginContainer.new()
+	nav_margin.add_theme_constant_override("margin_top", 24)
+	nav_margin.add_theme_constant_override("margin_bottom", 24)
+	nav_margin.add_theme_constant_override("margin_left", 8)
+	nav_margin.add_theme_constant_override("margin_right", 8)
+	left_nav_bar.add_child(nav_margin)
 
-	side_box.add_child(_label("🎵  VietStage", 32, BRASS))
-	side_box.add_child(_label("Học Nhạc Cụ Dân Tộc", 14, MUTED))
-	side_box.add_child(_hsep())
+	var nav_vbox := VBoxContainer.new()
+	nav_vbox.add_theme_constant_override("separation", 18)
+	nav_margin.add_child(nav_vbox)
 
-	# Avatar placeholder
-	var avatar_row := HBoxContainer.new()
-	avatar_row.add_theme_constant_override("separation", 10)
-	side_box.add_child(avatar_row)
-	var avatar := Panel.new()
-	avatar.custom_minimum_size = Vector2(52, 52)
-	avatar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	avatar.add_theme_stylebox_override("panel", _panel_style(Color(0.15, 0.09, 0.055, 0.9), BRASS, 26))
-	avatar_row.add_child(avatar)
-	var av_lbl := _label("VS", 22, BRASS, HORIZONTAL_ALIGNMENT_CENTER)
-	av_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	av_lbl.set_anchors_preset(Control.PRESET_FULL_RECT)
-	avatar.add_child(av_lbl)
-	var av_info := VBoxContainer.new()
-	av_info.add_theme_constant_override("separation", 2)
-	av_info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	avatar_row.add_child(av_info)
-	av_info.add_child(_label("Học Viên", 16, CREAM))
-	xp_label = _label("", 13, MUTED)
-	av_info.add_child(xp_label)
+	# App Logo
+	var app_logo := _label("🎋\nVietStage", 14, BRASS, HORIZONTAL_ALIGNMENT_CENTER)
+	if font_bold:
+		app_logo.add_theme_font_override("font", font_bold)
+	nav_vbox.add_child(app_logo)
+	
+	var nav_sep := _hsep()
+	nav_vbox.add_child(nav_sep)
 
-	xp_bar = ProgressBar.new()
-	xp_bar.custom_minimum_size = Vector2(0, 18)
-	xp_bar.max_value = 100
-	xp_bar.show_percentage = false
-	xp_bar.add_theme_stylebox_override("background", _bar_bg())
-	xp_bar.add_theme_stylebox_override("fill", _bar_fill(BRASS))
-	side_box.add_child(xp_bar)
+	# Button creation helpers for left nav
+	var act_style := _panel_style(CREAM, BRASS, 12)
+	var inact_style := StyleBoxEmpty.new()
 
-	side_box.add_child(_hsep())
+	# Courses tab button
+	tab_btn_courses = Button.new()
+	tab_btn_courses.custom_minimum_size = Vector2(88, 76)
+	tab_btn_courses.add_theme_stylebox_override("normal", act_style)
+	tab_btn_courses.add_theme_stylebox_override("hover", _panel_style(Color(CREAM, 0.08), Color(BRASS, 0.25), 12))
+	tab_btn_courses.pressed.connect(func(): _on_tab_pressed("courses"))
+	var btn_vbox := VBoxContainer.new()
+	btn_vbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	btn_vbox.set_anchors_preset(Control.PRESET_FULL_RECT)
+	tab_btn_courses.add_child(btn_vbox)
+	
+	var icon1 := _label("🎓", 22, WOOD_DARK, HORIZONTAL_ALIGNMENT_CENTER)
+	var lbl1 := _label("Khóa học", 11, WOOD_DARK, HORIZONTAL_ALIGNMENT_CENTER)
+	btn_vbox.add_child(icon1)
+	btn_vbox.add_child(lbl1)
+	nav_vbox.add_child(tab_btn_courses)
 
-	# Navigation buttons
-	var nav_items := [
-		["🏠  Home", "home"],
-		["🎮  Virtual Room", "room"],
-		["📊  Progress", "progress"],
-		["🎵  Audio Library", "library"],
-		["⚡  Daily Challenge", "daily"],
-	]
-	for item in nav_items:
-		var btn := _button(item[0], WOOD_PANEL, CREAM)
-		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		btn.custom_minimum_size = Vector2(0, 42)
-		btn.add_theme_font_size_override("font_size", 15)
-		var key: String = item[1]
-		btn.pressed.connect(func():
-			match key:
-				"home":     show_dashboard()
-				"room":     request_enter_room.emit()
-				"progress": show_progress()
-				"library":  show_audio_library()
-				"daily":    show_daily_challenge()
-		)
-		side_box.add_child(btn)
+	# Songs/Library tab button
+	tab_btn_library = Button.new()
+	tab_btn_library.custom_minimum_size = Vector2(88, 76)
+	tab_btn_library.add_theme_stylebox_override("normal", inact_style)
+	tab_btn_library.add_theme_stylebox_override("hover", _panel_style(Color(CREAM, 0.08), Color(BRASS, 0.25), 12))
+	tab_btn_library.pressed.connect(func(): _on_tab_pressed("library"))
+	var btn_vbox2 := VBoxContainer.new()
+	btn_vbox2.alignment = BoxContainer.ALIGNMENT_CENTER
+	btn_vbox2.set_anchors_preset(Control.PRESET_FULL_RECT)
+	tab_btn_library.add_child(btn_vbox2)
+	
+	var icon2 := _label("🎵", 22, CREAM, HORIZONTAL_ALIGNMENT_CENTER)
+	var lbl2 := _label("Thư viện", 11, CREAM, HORIZONTAL_ALIGNMENT_CENTER)
+	btn_vbox2.add_child(icon2)
+	btn_vbox2.add_child(lbl2)
+	nav_vbox.add_child(tab_btn_library)
 
-	side_box.add_child(_hsep())
-	side_box.add_child(_label("Daily Challenge", 16, BRASS))
-	side_box.add_child(_label("Keep steady beat 60s\nReward: 120 XP + 🔥", 13, CREAM))
+	# Games tab button
+	tab_btn_games = Button.new()
+	tab_btn_games.custom_minimum_size = Vector2(88, 76)
+	tab_btn_games.add_theme_stylebox_override("normal", inact_style)
+	tab_btn_games.add_theme_stylebox_override("hover", _panel_style(Color(CREAM, 0.08), Color(BRASS, 0.25), 12))
+	tab_btn_games.pressed.connect(func(): _on_tab_pressed("games"))
+	var btn_vbox3 := VBoxContainer.new()
+	btn_vbox3.alignment = BoxContainer.ALIGNMENT_CENTER
+	btn_vbox3.set_anchors_preset(Control.PRESET_FULL_RECT)
+	tab_btn_games.add_child(btn_vbox3)
+	
+	var icon3 := _label("🎮", 22, CREAM, HORIZONTAL_ALIGNMENT_CENTER)
+	var lbl3 := _label("Trò chơi", 11, CREAM, HORIZONTAL_ALIGNMENT_CENTER)
+	btn_vbox3.add_child(icon3)
+	btn_vbox3.add_child(lbl3)
+	nav_vbox.add_child(tab_btn_games)
 
-	var enter_btn := _button("▶  Enter 2.5D Room", BRASS, WOOD_DARK)
-	enter_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	enter_btn.custom_minimum_size = Vector2(0, 46)
-	enter_btn.add_theme_font_size_override("font_size", 16)
-	enter_btn.pressed.connect(func(): request_enter_room.emit())
-	side_box.add_child(enter_btn)
+	# Spacer
+	var nav_spacer := Control.new()
+	nav_spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	nav_vbox.add_child(nav_spacer)
 
-	# ── Main area ─────────────────────────────────────────────────────────────
-	var main := VBoxContainer.new()
-	main.name = "DashboardMain"
-	main.set_anchors_preset(Control.PRESET_FULL_RECT)
-	main.offset_left   = 342
-	main.offset_top    = 30
-	main.offset_right  = -28
-	main.offset_bottom = -88    # leave space for mobile nav
-	main.add_theme_constant_override("separation", 14)
-	dashboard.add_child(main)
+	# Room tab button (Play)
+	tab_btn_room = Button.new()
+	tab_btn_room.custom_minimum_size = Vector2(88, 76)
+	tab_btn_room.add_theme_stylebox_override("normal", inact_style)
+	tab_btn_room.add_theme_stylebox_override("hover", _panel_style(Color(CREAM, 0.08), Color(BRASS, 0.25), 12))
+	tab_btn_room.pressed.connect(func(): request_enter_room.emit())
+	var btn_vbox4 := VBoxContainer.new()
+	btn_vbox4.alignment = BoxContainer.ALIGNMENT_CENTER
+	btn_vbox4.set_anchors_preset(Control.PRESET_FULL_RECT)
+	tab_btn_room.add_child(btn_vbox4)
+	
+	var icon4 := _label("🏫", 22, CREAM, HORIZONTAL_ALIGNMENT_CENTER)
+	var lbl4 := _label("Phòng 2.5D", 11, CREAM, HORIZONTAL_ALIGNMENT_CENTER)
+	btn_vbox4.add_child(icon4)
+	btn_vbox4.add_child(lbl4)
+	nav_vbox.add_child(tab_btn_room)
 
-	var title_row := HBoxContainer.new()
-	title_row.add_theme_constant_override("separation", 12)
-	main.add_child(title_row)
-	var dash_title := _label("Home Dashboard", 32, CREAM)
-	dash_title.autowrap_mode = TextServer.AUTOWRAP_OFF
-	dash_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	title_row.add_child(dash_title)
-	# Streak badge
+	# ── Main content dashboard container ──
+	dashboard_scroll = ScrollContainer.new()
+	dashboard_scroll.name = "DashboardScroll"
+	dashboard_scroll.set_anchors_preset(Control.PRESET_FULL_RECT)
+	dashboard_scroll.offset_left = 124
+	dashboard_scroll.offset_top = 20
+	dashboard_scroll.offset_right = -24
+	dashboard_scroll.offset_bottom = -20
+	dashboard.add_child(dashboard_scroll)
+
+	dashboard_main = VBoxContainer.new()
+	dashboard_main.name = "DashboardMain"
+	dashboard_main.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	dashboard_main.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	dashboard_main.add_theme_constant_override("separation", 16)
+	dashboard_scroll.add_child(dashboard_main)
+	var main = dashboard_main
+
+	# ── Top Bar ──
+	var top_bar := HBoxContainer.new()
+	top_bar.add_theme_constant_override("separation", 16)
+	main.add_child(top_bar)
+
+	var hamburger_btn := _label("☰", 26, BRASS)
+	top_bar.add_child(hamburger_btn)
+
+	var dtitle_lbl := _label("VietStage", 24, CREAM)
+	if font_bold:
+		dtitle_lbl.add_theme_font_override("font", font_bold)
+	top_bar.add_child(dtitle_lbl)
+
+	var spacer := Control.new()
+	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	top_bar.add_child(spacer)
+
+	# Level Badge (Pill button)
+	var level_badge := PanelContainer.new()
+	level_badge.add_theme_stylebox_override("panel", _panel_style(Color(0.12, 0.08, 0.06, 0.9), BRASS_DIM, 1080))
+	var lb_margin := MarginContainer.new()
+	lb_margin.add_theme_constant_override("margin_left", 14)
+	lb_margin.add_theme_constant_override("margin_right", 14)
+	lb_margin.add_theme_constant_override("margin_top", 4)
+	lb_margin.add_theme_constant_override("margin_bottom", 4)
+	level_badge.add_child(lb_margin)
+	var level_lbl := _label("👤 Cấp độ " + str(int(gamification.get("level", 5))), 13, BRASS)
+	lb_margin.add_child(level_lbl)
+	top_bar.add_child(level_badge)
+
+	# Flame Streak Badge
 	var streak_badge := PanelContainer.new()
-	streak_badge.add_theme_stylebox_override("panel", _panel_style(Color(0.22, 0.1, 0.04, 0.9), STREAK_ORG, 8))
-	title_row.add_child(streak_badge)
-	var streak_lbl := _label("🔥  6 day streak", 15, STREAK_ORG)
-	streak_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	streak_badge.add_child(streak_lbl)
+	streak_badge.add_theme_stylebox_override("panel", _panel_style(Color(0.22, 0.1, 0.04, 0.9), STREAK_ORG, 1080))
+	var sb_margin := MarginContainer.new()
+	sb_margin.add_theme_constant_override("margin_left", 14)
+	sb_margin.add_theme_constant_override("margin_right", 14)
+	sb_margin.add_theme_constant_override("margin_top", 4)
+	sb_margin.add_theme_constant_override("margin_bottom", 4)
+	streak_badge.add_child(sb_margin)
+	var streak_lbl := _label("🔥 " + str(int(gamification.get("streak_days", 6))) + " ngày", 13, STREAK_ORG)
+	sb_margin.add_child(streak_lbl)
+	top_bar.add_child(streak_badge)
 
-	main.add_child(_label("Home → Virtual Room → Lesson → Artist Demo → Practice → Rewards", 13, MUTED))
+	# ── Instrument Category Selector (like Simply Guitar categories) ──
+	inst_selector_row = HBoxContainer.new()
+	inst_selector_row.add_theme_constant_override("separation", 10)
+	main.add_child(inst_selector_row)
 
-	# Stats cards row
-	var cards := HBoxContainer.new()
-	cards.add_theme_constant_override("separation", 14)
-	cards.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	main.add_child(cards)
-	cards.add_child(_dashboard_card("📈  Progress",
-		"Đàn Tranh Cơ Bản\n7 / 12 bài\nTiếp theo: Pluck timing", JADE))
-	cards.add_child(_dashboard_card("🔥  Streak",
-		"6 ngày liên tiếp\nĐiểm tuần: 12,840\nXếp hạng #8", SON_RED))
-	cards.add_child(_dashboard_card("🏆  Unlocked",
-		"3 huy hiệu\n2 vật phẩm phòng\n1 bài mới", BRASS))
-	cards.add_child(_dashboard_card("⏱  Practice",
-		"1h 20m hôm nay\n8h tuần này\nMục tiêu: 10h", JADE))
-
-	# Bottom row: Leaderboard + Badges
-	var lower := HBoxContainer.new()
-	lower.add_theme_constant_override("separation", 14)
-	main.add_child(lower)
-
-	var lb_section := _section_panel("🏅  Leaderboard Tuần")
-	lb_section.custom_minimum_size = Vector2(360, 200)
-	lower.add_child(lb_section)
-	leaderboard_list = VBoxContainer.new()
-	leaderboard_list.add_theme_constant_override("separation", 8)
-	lb_section.get_child(0).add_child(leaderboard_list)
-	_build_leaderboard_rows()
-
-	var badge_section := _section_panel("🎖  Bộ Sưu Tập Huy Hiệu")
-	badge_section.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	lower.add_child(badge_section)
-	badges_grid = GridContainer.new()
-	badges_grid.columns = 3
-	badges_grid.add_theme_constant_override("h_separation", 10)
-	badges_grid.add_theme_constant_override("v_separation", 10)
-	badge_section.get_child(0).add_child(badges_grid)
-	_build_badges()
-
-	# Mini-game shortcut buttons
-	var mg_section := _section_panel("🎲  Mini-Games")
-	mg_section.custom_minimum_size = Vector2(310, 200)
-	lower.add_child(mg_section)
-	var mg_box := VBoxContainer.new()
-	mg_box.add_theme_constant_override("separation", 10)
-	mg_section.get_child(0).add_child(mg_box)
-	mg_box.add_child(_label("Luyện tập qua mini-game!", 14, MUTED))
-	var mg_types := [
-		["🥁  Rhythm Match", 0],
-		["🎵  Note Quiz", 1],
-		["🎼  Melody Fill", 2],
+	var insts := [
+		["🎋 Đàn Tranh", "dan_tranh"],
+		["🎋 Sáo Trúc", "sao_truc"],
+		["🎻 Đàn Bầu", "dan_bau"],
+		["🥁 Trống", "trong"],
 	]
-	for mg in mg_types:
-		var mgbtn := _button(mg[0], WOOD_PANEL, CREAM)
-		mgbtn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		mgbtn.custom_minimum_size = Vector2(0, 40)
-		mgbtn.add_theme_font_size_override("font_size", 15)
-		var t: int = mg[1]
-		mgbtn.pressed.connect(func(): request_start_minigame.emit(t))
-		mg_box.add_child(mgbtn)
+	for item in insts:
+		var ibtn := _button(item[0], WOOD_PANEL, CREAM)
+		ibtn.custom_minimum_size = Vector2(110, 36)
+		ibtn.add_theme_font_size_override("font_size", 13)
+		ibtn.add_theme_stylebox_override("normal", _panel_style(WOOD_PANEL, BRASS_DIM, 1080))
+		var code: String = item[1]
+		ibtn.pressed.connect(func():
+			selected_instrument = code
+			# update active style for instrument buttons
+			for child in inst_selector_row.get_children():
+				if child is Button:
+					(child as Button).add_theme_stylebox_override("normal", _panel_style(WOOD_PANEL, BRASS_DIM, 1080))
+					(child as Button).add_theme_color_override("font_color", CREAM)
+			ibtn.add_theme_stylebox_override("normal", _panel_style(BRASS, BRASS, 1080))
+			ibtn.add_theme_color_override("font_color", WOOD_DARK)
+			_refresh_roadmap()
+		)
+		inst_selector_row.add_child(ibtn)
+
+	# Default active instrument style
+	if inst_selector_row.get_child_count() > 0:
+		var first_btn := inst_selector_row.get_child(0) as Button
+		first_btn.add_theme_stylebox_override("normal", _panel_style(BRASS, BRASS, 1080))
+		first_btn.add_theme_color_override("font_color", WOOD_DARK)
+
+	# ── Horizontal Scrolling Roadmap ──
+	roadmap_scroll = ScrollContainer.new()
+	roadmap_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	roadmap_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	roadmap_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	main.add_child(roadmap_scroll)
+
+	roadmap_row = HBoxContainer.new()
+	roadmap_row.add_theme_constant_override("separation", 0)
+	roadmap_row.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	roadmap_scroll.add_child(roadmap_row)
+
+	# ── Mini-Games Dashboard Panel (hidden by default) ──
+	dashboard_games_panel = PanelContainer.new()
+	dashboard_games_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	dashboard_games_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	dashboard_games_panel.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
+	main.add_child(dashboard_games_panel)
+	dashboard_games_panel.hide()
+
+	games_vbox = VBoxContainer.new()
+	games_vbox.add_theme_constant_override("separation", 16)
+	games_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	dashboard_games_panel.add_child(games_vbox)
+
+	games_vbox.add_child(_label("🎲  Trò chơi luyện tập", 22, BRASS))
+
+	var games_grid := GridContainer.new()
+	games_grid.columns = 3
+	games_grid.add_theme_constant_override("h_separation", 16)
+	games_grid.add_theme_constant_override("v_separation", 16)
+	games_grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	games_vbox.add_child(games_grid)
+
+	var game_list := [
+		["🥁 Khớp Nhịp Điệu", "Luyện phản xạ gõ theo nốt nhạc chạy trên làn đường.", 0, Color("faae33")],
+		["🎵 Trắc Nghiệm Nốt", "Nhận diện nhanh cao độ của các nốt nhạc dân tộc.", 1, Color("faae33")],
+		["🎼 Điền Giai Điệu", "Sắp xếp nốt nhạc để hoàn chỉnh giai điệu dân ca.", 2, Color("faae33")]
+	]
+	for g in game_list:
+		var gcard := PanelContainer.new()
+		gcard.custom_minimum_size = Vector2(250, 180)
+		gcard.add_theme_stylebox_override("panel", _panel_style(Color(0.12, 0.06, 0.04, 0.95), Color(0.25, 0.16, 0.09), 16))
+		games_grid.add_child(gcard)
+
+		var gmargin := MarginContainer.new()
+		gmargin.add_theme_constant_override("margin_left", 14)
+		gmargin.add_theme_constant_override("margin_right", 14)
+		gmargin.add_theme_constant_override("margin_top", 14)
+		gmargin.add_theme_constant_override("margin_bottom", 14)
+		gcard.add_child(gmargin)
+
+		var gbox := VBoxContainer.new()
+		gbox.add_theme_constant_override("separation", 10)
+		gmargin.add_child(gbox)
+
+		gbox.add_child(_label(g[0], 18, CREAM))
+		var desc := _label(g[1], 12, MUTED)
+		desc.autowrap_mode = TextServer.AUTOWRAP_WORD
+		desc.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		gbox.add_child(desc)
+
+		var gbtn := _button("CHƠI NGAY", BRASS, WOOD_DARK)
+		gbtn.custom_minimum_size = Vector2(0, 36)
+		gbtn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		var t: int = g[2]
+		gbtn.pressed.connect(func(): request_start_minigame.emit(t))
+		gbox.add_child(gbtn)
+
+	_refresh_roadmap()
 
 # ═══════════════════════════════════════════════════════════════════════════
 # ROOM HUD
@@ -575,7 +703,7 @@ func _build_room_hud() -> void:
 	row.add_theme_constant_override("separation", 16)
 	margin.add_child(row)
 
-	var room_title := _label("🎵  VietStage Room", 22, BRASS)
+	var room_title := _label("🎵  Phòng học nhạc VietStage", 22, BRASS)
 	room_title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	row.add_child(room_title)
 
@@ -583,11 +711,11 @@ func _build_room_hud() -> void:
 	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(spacer)
 
-	var home_btn := _room_nav_button("🏠  Home", show_dashboard)
+	var home_btn := _room_nav_button("🏠  Trang chủ", show_dashboard)
 	row.add_child(home_btn)
-	var prog_btn := _room_nav_button("📊  Progress", show_progress)
+	var prog_btn := _room_nav_button("📊  Tiến trình", show_progress)
 	row.add_child(prog_btn)
-	var lb_btn := _room_nav_button("🏆  Leaderboard", show_dashboard)
+	var lb_btn := _room_nav_button("🏆  Bảng xếp hạng", show_dashboard)
 	row.add_child(lb_btn)
 
 func _build_room_helper() -> void:
@@ -615,8 +743,8 @@ func _build_room_helper() -> void:
 	box.add_theme_constant_override("separation", 8)
 	margin.add_child(box)
 
-	box.add_child(_label("🏫  Khám Phá Phòng Học", 18, JADE))
-	box.add_child(_label("Chọn nhạc cụ phát sáng (hotspot) để bắt đầu luyện tập.", 13, CREAM))
+	box.add_child(_label("🏫  Khám phá phòng học", 18, JADE))
+	box.add_child(_label("Chọn nhạc cụ phát sáng để bắt đầu luyện tập.", 13, CREAM))
 
 	box.add_child(_hsep())
 
@@ -666,13 +794,18 @@ func _build_lesson_panel() -> void:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 12)
 	lesson_panel.add_child(box)
-	title_label = _label("Lessons", 26, BRASS)
+	title_label = _label("Bài học", 26, BRASS)
 	box.add_child(title_label)
-	box.add_child(_label("Chọn bài học → Xem artist demo → Luyện tập.", 13, MUTED))
+	box.add_child(_label("Chọn bài học → Xem nghệ sĩ biểu diễn → Luyện tập.", 13, MUTED))
+	
+	var lesson_scroll := ScrollContainer.new()
+	lesson_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	box.add_child(lesson_scroll)
+	
 	lesson_list = VBoxContainer.new()
 	lesson_list.add_theme_constant_override("separation", 10)
-	lesson_list.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	box.add_child(lesson_list)
+	lesson_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	lesson_scroll.add_child(lesson_list)
 	box.add_child(_hsep())
 
 	# Mini-game row in lesson panel
@@ -680,7 +813,7 @@ func _build_lesson_panel() -> void:
 	mg_row.add_theme_constant_override("separation", 8)
 	mg_row.alignment = BoxContainer.ALIGNMENT_CENTER
 	box.add_child(mg_row)
-	mg_row.add_child(_label("Mini-games:", 14, MUTED))
+	mg_row.add_child(_label("Trò chơi nhỏ:", 14, MUTED))
 	var rm_btn := _button("🥁 Rhythm", JADE, WOOD_DARK)
 	rm_btn.pressed.connect(func(): request_start_minigame.emit(0))
 	mg_row.add_child(rm_btn)
@@ -691,7 +824,7 @@ func _build_lesson_panel() -> void:
 	mc_btn.pressed.connect(func(): request_start_minigame.emit(2))
 	mg_row.add_child(mc_btn)
 
-	var close := _button("← Back to Room", WOOD_PANEL, CREAM)
+	var close := _button("← Trở về phòng", WOOD_PANEL, CREAM)
 	close.pressed.connect(func():
 		lesson_panel.hide()
 		request_back_to_room.emit()
@@ -803,23 +936,23 @@ func _build_progress_screen() -> void:
 	if accuracy_history.size() > 0:
 		avg_acc /= accuracy_history.size()
 
-	stats_row.add_child(_stat_card("🎯  Avg Accuracy", "%d%%" % int(avg_acc), JADE))
-	stats_row.add_child(_stat_card("⏱  Practice Time",
+	stats_row.add_child(_stat_card("🎯  Chính xác TB", "%d%%" % int(avg_acc), JADE))
+	stats_row.add_child(_stat_card("⏱  Luyện tập",
 		_format_minutes(int(gamification.get("practice_time", 0))), BRASS))
-	stats_row.add_child(_stat_card("📚  Lessons Done",
+	stats_row.add_child(_stat_card("📚  Bài xong",
 		"%d / %d" % [int(gamification.get("lessons_done", 0)), int(gamification.get("lessons_total", 1))], BRASS))
-	stats_row.add_child(_stat_card("🔥  Streak",
+	stats_row.add_child(_stat_card("🔥  Chuỗi ngày",
 		"%d ngày" % int(gamification.get("streak_days", 0)), STREAK_ORG))
-	stats_row.add_child(_stat_card("⭐  Level",
+	stats_row.add_child(_stat_card("⭐  Cấp độ",
 		"Level %d" % int(gamification.get("level", 1)), STAR_GOLD))
 
 	# ── XP progress ───────────────────────────────────────────────────────────
-	var xp_section := _section_panel("⭐  Kinh Nghiệm (XP)")
+	var xp_section := _section_panel("⭐  Kinh nghiệm (XP)")
 	main.add_child(xp_section)
 	var xp_box := VBoxContainer.new()
 	xp_box.add_theme_constant_override("separation", 8)
 	xp_section.get_child(0).add_child(xp_box)
-	xp_box.add_child(_label("Level %d — %d / %d XP đến Level %d" % [
+	xp_box.add_child(_label("Cấp độ %d — %d / %d XP để lên Cấp độ %d" % [
 		int(gamification.get("level", 1)),
 		int(gamification.get("xp", 0)),
 		int(gamification.get("xp_to_next", 1000)),
@@ -835,7 +968,7 @@ func _build_progress_screen() -> void:
 	xp_box.add_child(xp_pg)
 
 	# ── Badge collection ──────────────────────────────────────────────────────
-	var badge_section := _section_panel("🎖  Huy Hiệu Đã Mở Khóa")
+	var badge_section := _section_panel("🎖  Huy hiệu đã mở khóa")
 	main.add_child(badge_section)
 	var bg := GridContainer.new()
 	bg.columns = 4
@@ -854,7 +987,7 @@ func _build_progress_screen() -> void:
 		bp.add_theme_stylebox_override("panel", _panel_style(
 			Color(0.15, 0.09, 0.055, 0.96) if unlocked else Color(0.1, 0.075, 0.06, 0.9),
 			BRASS if unlocked else LOCKED_GREY, 8))
-		var bl := _label(("★ " if unlocked else "○ ") + badge, 13,
+		var bl := _label(("★ " if unlocked else "○ ") + _badge_title(badge), 13,
 			CREAM if unlocked else MUTED, HORIZONTAL_ALIGNMENT_CENTER)
 		bl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		bp.add_child(bl)
@@ -883,7 +1016,7 @@ func _draw_accuracy_chart(node: Control) -> void:
 	for pct in [0, 25, 50, 75, 100]:
 		var y := pad_t + chart_h * (1.0 - float(pct) / 100.0)
 		node.draw_line(Vector2(pad_l, y), Vector2(w - pad_r, y), Color(MUTED, 0.2), 1.0)
-		node.draw_string(ThemeDB.fallback_font, Vector2(2, y + 5), "%d%%" % pct, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, MUTED)
+		node.draw_string(font_reg if font_reg else ThemeDB.fallback_font, Vector2(2, y + 5), "%d%%" % pct, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, MUTED)
 
 	# Build polyline
 	var pts := PackedVector2Array()
@@ -912,7 +1045,7 @@ func _draw_accuracy_chart(node: Control) -> void:
 	for i in range(history.size()):
 		var t := float(i) / float(history.size() - 1)
 		var x := pad_l + t * chart_w
-		node.draw_string(ThemeDB.fallback_font, Vector2(x - 8, h - 4), "S%d" % (i + 1),
+		node.draw_string(font_reg if font_reg else ThemeDB.fallback_font, Vector2(x - 8, h - 4), "S%d" % (i + 1),
 			HORIZONTAL_ALIGNMENT_LEFT, -1, 11, MUTED)
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -942,20 +1075,31 @@ func _build_audio_library() -> void:
 	var hdr := HBoxContainer.new()
 	hdr.add_theme_constant_override("separation", 14)
 	main.add_child(hdr)
-	var back := _button("← Home", WOOD_PANEL, CREAM)
+	var back := _button("← Trang chủ", WOOD_PANEL, CREAM)
 	back.pressed.connect(show_dashboard)
 	hdr.add_child(back)
 	var hdr_lbl := _label("🎵  Thư Viện Âm Thanh", 30, CREAM)
 	hdr_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	hdr.add_child(hdr_lbl)
-	# Filter buttons
+	# Horizontal Scroll wrapper for filters (Spotify/YouTube style)
+	var filter_scroll := ScrollContainer.new()
+	filter_scroll.custom_minimum_size = Vector2(0, 48)
+	filter_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	filter_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	main.add_child(filter_scroll)
+
+	var filter_row := HBoxContainer.new()
+	filter_row.add_theme_constant_override("separation", 8)
+	filter_scroll.add_child(filter_row)
+
+	# Filter buttons inside filter_row
 	for inst_name in ["Tất cả", "Đàn Tranh", "Sáo Trúc", "Đàn Bầu", "Trống"]:
 		var fb := _button(inst_name, WOOD_PANEL, CREAM)
-		fb.custom_minimum_size = Vector2(88, 36)
-		hdr.add_child(fb)
+		fb.custom_minimum_size = Vector2(96, 36)
+		filter_row.add_child(fb)
 
 	# Waveform preview card
-	var wf_section := _section_panel("📊  Waveform Preview")
+	var wf_section := _section_panel("📊  Dạng sóng")
 	wf_section.custom_minimum_size = Vector2(0, 140)
 	main.add_child(wf_section)
 	var wf_inner := wf_section.get_child(0)
@@ -972,7 +1116,7 @@ func _build_audio_library() -> void:
 	wf_inner.add_child(pb_row)
 	var play_btn := _button("▶  Play", JADE, WOOD_DARK)
 	pb_row.add_child(play_btn)
-	var slow_btn := _button("🐢  Slow (0.5x)", BRASS, WOOD_DARK)
+	var slow_btn := _button("🐢  Chậm (0.5x)", BRASS, WOOD_DARK)
 	pb_row.add_child(slow_btn)
 	var stop_btn := _button("■  Stop", WOOD_PANEL, CREAM)
 	pb_row.add_child(stop_btn)
@@ -1068,14 +1212,23 @@ func _build_daily_challenge() -> void:
 	shade.color = SHADOW
 	daily_challenge.add_child(shade)
 
-	var main := HBoxContainer.new()
-	main.set_anchors_preset(Control.PRESET_FULL_RECT)
-	main.offset_left   = 28
-	main.offset_top    = 24
-	main.offset_right  = -28
-	main.offset_bottom = -88
-	main.add_theme_constant_override("separation", 18)
-	daily_challenge.add_child(main)
+	var scroll := ScrollContainer.new()
+	scroll.set_anchors_preset(Control.PRESET_FULL_RECT)
+	scroll.offset_left = 28
+	scroll.offset_top = 24
+	scroll.offset_right = -28
+	scroll.offset_bottom = -88
+	daily_challenge.add_child(scroll)
+
+	daily_challenge_main = GridContainer.new()
+	daily_challenge_main.name = "DailyChallengeGrid"
+	daily_challenge_main.columns = 2
+	daily_challenge_main.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	daily_challenge_main.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	daily_challenge_main.add_theme_constant_override("h_separation", 18)
+	daily_challenge_main.add_theme_constant_override("v_separation", 18)
+	scroll.add_child(daily_challenge_main)
+	var main = daily_challenge_main
 
 	# ── Left column ───────────────────────────────────────────────────────────
 	var left_col := VBoxContainer.new()
@@ -1086,7 +1239,7 @@ func _build_daily_challenge() -> void:
 	var hdr := HBoxContainer.new()
 	hdr.add_theme_constant_override("separation", 12)
 	left_col.add_child(hdr)
-	var back := _button("← Home", WOOD_PANEL, CREAM)
+	var back := _button("← Trang chủ", WOOD_PANEL, CREAM)
 	back.pressed.connect(show_dashboard)
 	hdr.add_child(back)
 	left_col.add_child(_label("⚡  Daily Challenge", 30, BRASS))
@@ -1124,7 +1277,7 @@ func _build_daily_challenge() -> void:
 		cal_row.add_child(day_box)
 
 	# Today's task
-	var task_section := _section_panel("📋  Nhiệm Vụ Hôm Nay")
+	var task_section := _section_panel("📋  Nhiệm vụ hôm nay")
 	left_col.add_child(task_section)
 	var tasks := [
 		{"title": "Luyện tập nhịp đều 60s", "reward": "120 XP", "done": true},
@@ -1162,7 +1315,7 @@ func _build_daily_challenge() -> void:
 	main.add_child(right_col)
 
 	right_col.add_child(_label("🏅  Leaderboard Hôm Nay", 24, CREAM))
-	var lb_panel := _section_panel("Top Học Viên")
+	var lb_panel := _section_panel("Top học viên")
 	lb_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	right_col.add_child(lb_panel)
 	var lb_box := VBoxContainer.new()
@@ -1252,7 +1405,7 @@ func _make_lesson_card(lesson: Dictionary) -> Control:
 	row.add_child(info)
 	var locked: bool = not bool(lesson.get("is_unlocked", true))
 	info.add_child(_label(lesson.get("title", "Lesson"), 18, CREAM if not locked else MUTED))
-	info.add_child(_label("%s  •  Level %d" % [lesson.get("difficulty", "Beginner"), int(lesson.get("required_level", 1))], 13, MUTED))
+	info.add_child(_label("%s  •  Cấp độ %d" % [_difficulty_title(lesson.get("difficulty", "Beginner")), int(lesson.get("required_level", 1))], 13, MUTED))
 	var demo_btn := _button("Demo", JADE if not locked else LOCKED_GREY, WOOD_DARK)
 	demo_btn.disabled = locked
 	demo_btn.pressed.connect(func():
@@ -1334,7 +1487,7 @@ func _build_badges() -> void:
 		panel.add_theme_stylebox_override("panel", _panel_style(
 			Color(0.15, 0.09, 0.055, 0.96),
 			BRASS if unlocked else LOCKED_GREY, 8))
-		var label := _label(("★ " if unlocked else "○ ") + badge, 12,
+		var label := _label(("★ " if unlocked else "○ ") + _badge_title(badge), 12,
 			CREAM if unlocked else MUTED, HORIZONTAL_ALIGNMENT_CENTER)
 		label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		panel.add_child(label)
@@ -1362,18 +1515,66 @@ func _apply_responsive_layout() -> void:
 	desktop_mode = width >= 800
 	_sync_mobile_nav()
 	_set_top_bar_rect()
+	
+	# Co giãn thẻ Đăng nhập (LoginCard)
+	if is_instance_valid(login_card):
+		var card_w: float = min(480.0, width - 32.0)
+		login_card.custom_minimum_size = Vector2(card_w, 560)
+		login_card.offset_left = -card_w * 0.5
+		login_card.offset_right = card_w * 0.5
+		login_card.offset_top = -280
+		login_card.offset_bottom = 280
+		
+	# Co giãn Hộp thoại Kết quả (ResultPanel)
+	if is_instance_valid(result_panel):
+		if desktop_mode:
+			result_panel.custom_minimum_size = Vector2(700, 440)
+			result_panel.offset_left = -350
+			result_panel.offset_right = 350
+			result_panel.offset_top = -220
+			result_panel.offset_bottom = 220
+		else:
+			var res_w: float = min(700.0, width - 24.0)
+			result_panel.custom_minimum_size = Vector2(res_w, 480)
+			result_panel.offset_left = -res_w * 0.5
+			result_panel.offset_right = res_w * 0.5
+			result_panel.offset_top = -240
+			result_panel.offset_bottom = 240
+
 	if desktop_mode:
 		lesson_panel.set_anchors_preset(Control.PRESET_RIGHT_WIDE)
 		lesson_panel.offset_left   = -440
 		lesson_panel.offset_top    = 92
 		lesson_panel.offset_right  = -18
 		lesson_panel.offset_bottom = -92
+		
+		# Dashboard desktop
+		if is_instance_valid(left_nav_bar):
+			left_nav_bar.show()
+		if is_instance_valid(dashboard_scroll):
+			dashboard_scroll.offset_left = 124
+			dashboard_scroll.offset_top = 20
+			dashboard_scroll.offset_right = -24
+			dashboard_scroll.offset_bottom = -20
+		if is_instance_valid(daily_challenge_main):
+			daily_challenge_main.columns = 2
 	else:
 		lesson_panel.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
 		lesson_panel.offset_left   = 10
 		lesson_panel.offset_top    = -440
 		lesson_panel.offset_right  = -10
 		lesson_panel.offset_bottom = -88
+		
+		# Dashboard mobile
+		if is_instance_valid(left_nav_bar):
+			left_nav_bar.hide()
+		if is_instance_valid(dashboard_scroll):
+			dashboard_scroll.offset_left = 18
+			dashboard_scroll.offset_top = 20
+			dashboard_scroll.offset_right = -18
+			dashboard_scroll.offset_bottom = -88
+		if is_instance_valid(daily_challenge_main):
+			daily_challenge_main.columns = 1
 
 func _set_top_bar_rect() -> void:
 	if hud_top == null:
@@ -1403,6 +1604,8 @@ func _label(text: String, size: int, color: Color, align := HORIZONTAL_ALIGNMENT
 	label.horizontal_alignment = align
 	label.add_theme_font_size_override("font_size", size)
 	label.add_theme_color_override("font_color", color)
+	if font_reg:
+		label.add_theme_font_override("font", font_reg)
 	return label
 
 func _button(text: String, bg: Color, fg: Color) -> Button:
@@ -1451,7 +1654,10 @@ func _panel_style(bg: Color, border: Color, radius: int) -> StyleBoxFlat:
 	style.bg_color = bg
 	style.border_color = border
 	style.set_border_width_all(2)
-	style.set_corner_radius_all(radius)
+	var target_radius := radius
+	if radius != 1296 and radius != 1224 and radius != 1152 and radius != 1080:
+		target_radius = 6
+	style.set_corner_radius_all(target_radius)
 	style.content_margin_left   = 14
 	style.content_margin_right  = 14
 	style.content_margin_top    = 12
@@ -1494,3 +1700,239 @@ func _format_minutes(total_seconds: int) -> String:
 	if h > 0:
 		return "%dh %dm" % [h, m]
 	return "%d phút" % m
+
+
+# ── Helper functions for translation ──
+func _badge_title(badge_name: String) -> String:
+	match badge_name:
+		"First Rhythm": return "Nhịp điệu đầu tiên"
+		"Pitch Ear": return "Thính nhạy cao độ"
+		"Three Day Streak": return "Chuỗi 3 ngày"
+		"Dan Tranh Novice": return "Đàn Tranh sơ cấp"
+		"Sao Truc Breath": return "Hơi thở Sáo Trúc"
+		"Cultural Explorer": return "Khám phá văn hóa"
+		"Steady Beat": return "Giữ nhịp ổn định"
+		"Quick Learner": return "Học nhanh"
+		_: return badge_name
+
+func _difficulty_title(diff_str: String) -> String:
+	match diff_str:
+		"Beginner": return "Cơ bản"
+		"Intermediate": return "Trung cấp"
+		"Advanced": return "Nâng cao"
+		_: return diff_str
+
+
+# ── Simply Guitar roadmap helper methods ──
+func set_lessons(lessons_arr: Array) -> void:
+	all_lessons = lessons_arr
+	_refresh_roadmap()
+
+func _on_tab_pressed(tab_name: String) -> void:
+	current_dashboard_tab = tab_name
+	
+	var act_style := _panel_style(CREAM, BRASS, 12)
+	var inact_style := StyleBoxEmpty.new()
+	
+	tab_btn_courses.add_theme_stylebox_override("normal", act_style if tab_name == "courses" else inact_style)
+	tab_btn_library.add_theme_stylebox_override("normal", act_style if tab_name == "library" else inact_style)
+	tab_btn_games.add_theme_stylebox_override("normal", act_style if tab_name == "games" else inact_style)
+	
+	# update label/icon text colors on active buttons
+	if tab_btn_courses.get_child_count() > 0:
+		var c_lbl1 := tab_btn_courses.get_child(0).get_child(0) as Label
+		var c_lbl2 := tab_btn_courses.get_child(0).get_child(1) as Label
+		c_lbl1.add_theme_color_override("font_color", WOOD_DARK if tab_name == "courses" else CREAM)
+		c_lbl2.add_theme_color_override("font_color", WOOD_DARK if tab_name == "courses" else CREAM)
+	
+	if tab_btn_library.get_child_count() > 0:
+		var l_lbl1 := tab_btn_library.get_child(0).get_child(0) as Label
+		var l_lbl2 := tab_btn_library.get_child(0).get_child(1) as Label
+		l_lbl1.add_theme_color_override("font_color", WOOD_DARK if tab_name == "library" else CREAM)
+		l_lbl2.add_theme_color_override("font_color", WOOD_DARK if tab_name == "library" else CREAM)
+	
+	if tab_btn_games.get_child_count() > 0:
+		var g_lbl1 := tab_btn_games.get_child(0).get_child(0) as Label
+		var g_lbl2 := tab_btn_games.get_child(0).get_child(1) as Label
+		g_lbl1.add_theme_color_override("font_color", WOOD_DARK if tab_name == "games" else CREAM)
+		g_lbl2.add_theme_color_override("font_color", WOOD_DARK if tab_name == "games" else CREAM)
+	
+	if tab_name == "courses":
+		inst_selector_row.show()
+		roadmap_scroll.show()
+		dashboard_games_panel.hide()
+		audio_lib_screen.hide()
+		_refresh_roadmap()
+	elif tab_name == "library":
+		inst_selector_row.hide()
+		roadmap_scroll.hide()
+		dashboard_games_panel.hide()
+		show_audio_library()
+	elif tab_name == "games":
+		inst_selector_row.hide()
+		roadmap_scroll.hide()
+		audio_lib_screen.hide()
+		dashboard_games_panel.show()
+
+func _refresh_roadmap() -> void:
+	if roadmap_row == null:
+		return
+		
+	# Clear previous cards
+	for child in roadmap_row.get_children():
+		child.queue_free()
+		
+	# Filter lessons by selected_instrument
+	var instrument_lessons := []
+	for l in all_lessons:
+		if l.get("instrument", "") == selected_instrument:
+			instrument_lessons.append(l)
+			
+	# If no lessons (e.g. not loaded yet), load static placeholder lessons for dan_tranh
+	if instrument_lessons.size() == 0:
+		instrument_lessons = [
+			{
+				"lesson_id": "dt_001",
+				"instrument": "dan_tranh",
+				"title": "Kỹ thuật gảy cơ bản",
+				"difficulty": "Beginner",
+				"required_level": 1,
+				"stars": 2,
+				"is_unlocked": true,
+			},
+			{
+				"lesson_id": "dt_002",
+				"instrument": "dan_tranh",
+				"title": "Kỹ thuật rung tay trái",
+				"difficulty": "Intermediate",
+				"required_level": 5,
+				"stars": 0,
+				"is_unlocked": true,
+			},
+			{
+				"lesson_id": "dt_003",
+				"instrument": "dan_tranh",
+				"title": "Chuỗi Tremolo nhanh",
+				"difficulty": "Advanced",
+				"required_level": 8,
+				"stars": 0,
+				"is_unlocked": false,
+			}
+		]
+		
+	for i in range(instrument_lessons.size()):
+		var lesson: Dictionary = instrument_lessons[i] as Dictionary
+		var is_locked: bool = not bool(lesson.get("is_unlocked", true)) or int(lesson.get("required_level", 1)) > int(gamification.get("level", 1))
+		var stars: int = int(lesson.get("stars", 0))
+		
+		# Create Course Card
+		var card := PanelContainer.new()
+		card.custom_minimum_size = Vector2(380, 230)
+		
+		# Glowing border style for active, regular for others
+		var border_color := BRASS if (stars > 0 or not is_locked) else Color(0.25, 0.16, 0.09)
+		if stars == 0 and not is_locked:
+			# Active current lesson has a beautiful bright Curry Yellow glowing border!
+			border_color = BRASS
+			card.add_theme_stylebox_override("panel", _panel_style(Color(0.18, 0.09, 0.05, 0.98), BRASS, 16))
+		else:
+			card.add_theme_stylebox_override("panel", _panel_style(Color(0.12, 0.06, 0.04, 0.95), border_color, 16))
+			
+		if is_locked:
+			card.modulate = Color(1.0, 1.0, 1.0, 0.65) # dimmed opacity
+			
+		var margin := MarginContainer.new()
+		margin.add_theme_constant_override("margin_left", 18)
+		margin.add_theme_constant_override("margin_right", 18)
+		margin.add_theme_constant_override("margin_top", 16)
+		margin.add_theme_constant_override("margin_bottom", 16)
+		card.add_child(margin)
+		
+		var main_hbox := HBoxContainer.new()
+		main_hbox.add_theme_constant_override("separation", 12)
+		margin.add_child(main_hbox)
+		
+		# Left content of card
+		var left_vbox := VBoxContainer.new()
+		left_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		left_vbox.add_theme_constant_override("separation", 8)
+		main_hbox.add_child(left_vbox)
+		
+		# Small yellow badge
+		var badge_panel := PanelContainer.new()
+		badge_panel.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+		badge_panel.add_theme_stylebox_override("panel", _panel_style(BRASS, BRASS, 1080)) # Pill shape
+		var badge_margin := MarginContainer.new()
+		badge_margin.add_theme_constant_override("margin_left", 8)
+		badge_margin.add_theme_constant_override("margin_right", 8)
+		badge_margin.add_theme_constant_override("margin_top", 2)
+		badge_margin.add_theme_constant_override("margin_bottom", 2)
+		badge_panel.add_child(badge_margin)
+		var badge_lbl := _label("🎵 LỘ TRÌNH CHÍNH", 10, WOOD_DARK)
+		badge_margin.add_child(badge_lbl)
+		left_vbox.add_child(badge_panel)
+		
+		# Title
+		var title_lbl := _label(lesson.get("title", ""), 20, CREAM)
+		left_vbox.add_child(title_lbl)
+		
+		# Bullet points
+		var desc_lbl := _label("• Kỹ năng: " + _difficulty_title(lesson.get("difficulty", "Beginner")) + "\n• Yêu cầu: Cấp độ " + str(int(lesson.get("required_level", 1))) + "\n• Thưởng: 100 XP + 🔥", 13, MUTED)
+		desc_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD
+		left_vbox.add_child(desc_lbl)
+		
+		# Stars achieved
+		var stars_row := HBoxContainer.new()
+		for s in range(3):
+			var star := _label("★" if s < stars else "☆", 18, STAR_GOLD if s < stars else MUTED)
+			stars_row.add_child(star)
+		left_vbox.add_child(stars_row)
+		
+		# Right content of card: Illustration & Play button
+		var right_vbox := VBoxContainer.new()
+		right_vbox.alignment = BoxContainer.ALIGNMENT_END
+		right_vbox.add_theme_constant_override("separation", 16)
+		main_hbox.add_child(right_vbox)
+		
+		# Instrument Graphic / Artist cutout placeholder
+		var graphic := Panel.new()
+		graphic.custom_minimum_size = Vector2(80, 80)
+		graphic.add_theme_stylebox_override("panel", _panel_style(Color(0.18, 0.1, 0.05, 0.5), Color(0,0,0,0), 8))
+		var g_lbl := _label("🎋" if selected_instrument == "dan_tranh" else ("🎋" if selected_instrument == "sao_truc" else ("violin" if selected_instrument == "dan_bau" else "🥁")), 32, BRASS, HORIZONTAL_ALIGNMENT_CENTER)
+		# Draw the actual emoji or symbol cleanly
+		if selected_instrument == "dan_tranh":
+			g_lbl.text = "🎋"
+		elif selected_instrument == "sao_truc":
+			g_lbl.text = "🎋"
+		elif selected_instrument == "dan_bau":
+			g_lbl.text = "🎻"
+		elif selected_instrument == "trong":
+			g_lbl.text = "🥁"
+		g_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		g_lbl.set_anchors_preset(Control.PRESET_FULL_RECT)
+		graphic.add_child(g_lbl)
+		right_vbox.add_child(graphic)
+		
+		# Play button / Locked indicator
+		if is_locked:
+			var lock_btn := _button("🔒 KHÓA", LOCKED_GREY, CREAM)
+			lock_btn.custom_minimum_size = Vector2(100, 36)
+			lock_btn.disabled = true
+			right_vbox.add_child(lock_btn)
+		else:
+			var play_btn := _button("PLAY", CREAM, WOOD_DARK)
+			play_btn.custom_minimum_size = Vector2(100, 36)
+			play_btn.add_theme_stylebox_override("normal", _panel_style(CREAM, CREAM, 1080)) # Pill shape
+			play_btn.add_theme_stylebox_override("hover", _panel_style(BRASS, BRASS, 1080))
+			play_btn.pressed.connect(func(): request_start_practice.emit(lesson))
+			right_vbox.add_child(play_btn)
+			
+		roadmap_row.add_child(card)
+		
+		# Add roadmap connector line (if not last card)
+		if i < instrument_lessons.size() - 1:
+			var conn := Panel.new()
+			conn.custom_minimum_size = Vector2(36, 6)
+			conn.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+			conn.add_theme_stylebox_override("panel", _panel_style(BRASS_DIM if is_locked else BRASS, Color(0,0,0,0), 1080))
+			roadmap_row.add_child(conn)

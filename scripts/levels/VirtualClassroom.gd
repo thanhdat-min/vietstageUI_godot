@@ -35,7 +35,7 @@ var lessons: Array[Dictionary] = [
 	{
 		"lesson_id":       "dt_001",
 		"instrument":      "dan_tranh",
-		"title":           "Basic Pluck Timing",
+		"title":           "Kỹ thuật gảy cơ bản",
 		"difficulty":      "Beginner",
 		"required_level":  1,
 		"stars":           2,
@@ -46,7 +46,7 @@ var lessons: Array[Dictionary] = [
 	{
 		"lesson_id":       "dt_002",
 		"instrument":      "dan_tranh",
-		"title":           "Left-hand Vibrato",
+		"title":           "Kỹ thuật rung tay trái",
 		"difficulty":      "Intermediate",
 		"required_level":  5,
 		"stars":           0,
@@ -57,7 +57,7 @@ var lessons: Array[Dictionary] = [
 	{
 		"lesson_id":       "dt_003",
 		"instrument":      "dan_tranh",
-		"title":           "Fast Tremolo Chain",
+		"title":           "Chuỗi Tremolo nhanh",
 		"difficulty":      "Advanced",
 		"required_level":  8,
 		"stars":           0,
@@ -68,7 +68,7 @@ var lessons: Array[Dictionary] = [
 	{
 		"lesson_id":       "db_001",
 		"instrument":      "dan_bau",
-		"title":           "Nốt Đơn Đàn Bầu",
+		"title":           "Ná»‘t ÄÆ¡n ÄÃ n Báº§u",
 		"difficulty":      "Beginner",
 		"required_level":  1,
 		"stars":           0,
@@ -90,7 +90,7 @@ var lessons: Array[Dictionary] = [
 	{
 		"lesson_id":       "st_001",
 		"instrument":      "sao_truc",
-		"title":           "Breath Attack Basics",
+		"title":           "Nhịp lấy hơi cơ bản",
 		"difficulty":      "Beginner",
 		"required_level":  1,
 		"stars":           1,
@@ -101,7 +101,7 @@ var lessons: Array[Dictionary] = [
 	{
 		"lesson_id":       "st_002",
 		"instrument":      "sao_truc",
-		"title":           "Sustain and Release",
+		"title":           "Kỹ thuật ngân vang",
 		"difficulty":      "Beginner",
 		"required_level":  3,
 		"stars":           0,
@@ -122,11 +122,12 @@ var lessons: Array[Dictionary] = [
 	}
 ]
 
-# ═══════════════════════════════════════════════════════════════════════════
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 func _ready() -> void:
 	_wire_signals()
 	_setup_room()
 	shell_ui.configure(gamification)
+	shell_ui.set_lessons(lessons)
 	practice_ui.hide()
 	if is_instance_valid(minigame_ui):
 		minigame_ui.hide()
@@ -173,7 +174,7 @@ func _setup_room() -> void:
 	sao_truc_station.apply_state("available")
 	trong_station.apply_state("locked")
 
-# ─── State transitions ───────────────────────────────────────────────────────
+# â”€â”€â”€ State transitions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 func _enter_room() -> void:
 	state = FlowState.EXPLORE
 	if is_instance_valid(minigame_ui):
@@ -205,7 +206,7 @@ func _start_artist_demo(lesson: Dictionary) -> void:
 	if audio_path != "" and ResourceLoader.exists(audio_path):
 		audio_stream = load(audio_path)
 	virtual_artist.demonstrate_technique(_technique_for_lesson(lesson), audio_stream)
-	virtual_artist.give_feedback(true, "Listen first, then play the rhythm.")
+	virtual_artist.give_feedback(true, "Hãy nghe thử trước, sau đó đánh theo nhịp điệu.")
 	await get_tree().create_timer(3.2).timeout
 	if state == FlowState.ARTIST_DEMO:
 		virtual_artist.stop_demonstration()
@@ -225,7 +226,7 @@ func _start_practice(lesson: Dictionary) -> void:
 	if is_instance_valid(minigame_ui):
 		minigame_ui.hide()
 	virtual_artist.stop_demonstration()
-	virtual_artist.give_feedback(true, "Your turn. Follow the rhythm lane!", 2.2)
+	virtual_artist.give_feedback(true, "Đến lượt bạn. Hãy đánh theo nhịp điệu trên làn đường!", 2.2)
 	_focus_camera(Vector2(576, 508), 0.96)
 	practice_ui.start_practice(lesson)
 	_run_practice_simulation(run_id)
@@ -301,7 +302,7 @@ func _start_next_lesson() -> void:
 			return
 	shell_ui.show_lesson_panel(instrument, instrument_lessons)
 
-# ─── Mini-game ──────────────────────────────────────────────────────────────────
+# â”€â”€â”€ Mini-game â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 func _start_minigame(type: int) -> void:
 	if not is_instance_valid(minigame_ui):
 		push_warning("VirtualClassroom: MiniGameUI node not found, cannot start minigame.")
@@ -329,7 +330,7 @@ func _on_minigame_cancelled() -> void:
 	state = FlowState.EXPLORE
 	shell_ui.show_dashboard()
 
-# ─── Helpers ─────────────────────────────────────────────────────────────────
+# â”€â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 func _lessons_for_instrument(instrument: String) -> Array:
 	return lessons.filter(func(lesson): return lesson.get("instrument", "") == instrument)
 
@@ -353,8 +354,8 @@ func _focus_camera(target: Vector2, zoom_value: float) -> void:
 func _show_artist_result_feedback(result: Dictionary) -> void:
 	var stars: int = int(result.get("stars", 1))
 	if stars >= 3:
-		virtual_artist.give_feedback(true, "Excellent! Both rhythm and tone were stable.", 3.0)
+		virtual_artist.give_feedback(true, "Tuyệt vời! Cả nhịp điệu và âm sắc đều rất ổn định.", 3.0)
 	elif stars == 2:
-		virtual_artist.give_feedback(true, "Good progress. Repeat to polish timing.", 3.0)
+		virtual_artist.give_feedback(true, "Tiến bộ rất tốt. Hãy lặp lại để hoàn thiện thời gian.", 3.0)
 	else:
-		virtual_artist.give_feedback(false, "Let's slow it down and focus on the first beat.", 3.0)
+		virtual_artist.give_feedback(false, "Hãy chậm lại một chút và tập trung vào nhịp đầu tiên.", 3.0)

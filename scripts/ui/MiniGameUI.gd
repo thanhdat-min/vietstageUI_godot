@@ -1,18 +1,21 @@
 extends Control
 class_name MiniGameUI
 
+@onready var font_reg: Font = load("res://assets/fonts/Inter-Regular.ttf")
+@onready var font_bold: Font = load("res://assets/fonts/Inter-SemiBold.ttf")
+
 signal minigame_finished(result: Dictionary)
 signal minigame_cancelled
 
 # ── Colour palette (matches project theme) ─────────────────────────────────
-const WOOD_DARK  := Color("24130d")
-const WOOD_PANEL := Color("3b2318")
-const BRASS      := Color("d7a84a")
-const BRASS_DIM  := Color("9c7230")
-const JADE       := Color("1f9a8a")
-const SON_RED    := Color("8d2f22")
-const CREAM      := Color("f4dfb8")
-const MUTED      := Color("c8af83")
+const WOOD_DARK  := Color("281006") # Mahogany Canvas
+const WOOD_PANEL := Color("402011") # Burnt Sienna
+const BRASS      := Color("faae33") # Curry Yellow
+const BRASS_DIM  := Color("823513") # Spiced Orange
+const JADE       := Color("faae33") # Curry Yellow
+const SON_RED    := Color("d1255c") # Chili Red
+const CREAM      := Color("ffffff") # Crisp White
+const MUTED      := Color("9f531b") # Cinnamon Brown / Muted
 const SHADOW     := Color(0.03, 0.02, 0.015, 0.82)
 const STAR_GOLD  := Color("f0c840")
 const SUCCESS    := Color("3ec97a")
@@ -96,6 +99,10 @@ func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_build_shell()
 	hide()
+	get_viewport().size_changed.connect(_apply_responsive_layout)
+	_apply_responsive_layout()
+	get_viewport().size_changed.connect(_apply_responsive_layout)
+	_apply_responsive_layout()
 
 func _process(delta: float) -> void:
 	if not active:
@@ -795,7 +802,7 @@ func _show_result_overlay(result: Dictionary) -> void:
 	result_panel.offset_top = -180
 	result_panel.offset_right = 260
 	result_panel.offset_bottom = 180
-	result_panel.add_theme_stylebox_override("panel", _panel_style(Color(0.11, 0.06, 0.04, 0.99), BRASS, 14))
+	result_panel.add_theme_stylebox_override("panel", _panel_style(Color(0.11, 0.06, 0.04, 0.99), BRASS, 6))
 	add_child(result_panel)
 
 	var vbox := VBoxContainer.new()
@@ -854,6 +861,8 @@ func _label(text: String, size: int, color: Color, align := HORIZONTAL_ALIGNMENT
 	label.horizontal_alignment = align
 	label.add_theme_font_size_override("font_size", size)
 	label.add_theme_color_override("font_color", color)
+	if font_reg:
+		label.add_theme_font_override("font", font_reg)
 	return label
 
 func _button(text: String, bg: Color, fg: Color) -> Button:
@@ -862,9 +871,9 @@ func _button(text: String, bg: Color, fg: Color) -> Button:
 	button.custom_minimum_size = Vector2(120, 44)
 	button.add_theme_font_size_override("font_size", 15)
 	button.add_theme_color_override("font_color", fg)
-	button.add_theme_stylebox_override("normal",  _panel_style(bg, bg.lightened(0.18), 8))
-	button.add_theme_stylebox_override("hover",   _panel_style(bg.lightened(0.1), BRASS, 8))
-	button.add_theme_stylebox_override("pressed", _panel_style(bg.darkened(0.12), BRASS, 8))
+	button.add_theme_stylebox_override("normal",  _panel_style(bg, bg.lightened(0.18), 1296))
+	button.add_theme_stylebox_override("hover",   _panel_style(bg.lightened(0.1), BRASS, 1296))
+	button.add_theme_stylebox_override("pressed", _panel_style(bg.darkened(0.12), BRASS, 1296))
 	return button
 
 func _panel_style(bg: Color, border: Color, radius: int) -> StyleBoxFlat:
@@ -872,9 +881,119 @@ func _panel_style(bg: Color, border: Color, radius: int) -> StyleBoxFlat:
 	style.bg_color = bg
 	style.border_color = border
 	style.set_border_width_all(2)
-	style.set_corner_radius_all(radius)
+	var target_radius := radius
+	if radius != 1296 and radius != 1224 and radius != 1152 and radius != 1080:
+		target_radius = 6
+	style.set_corner_radius_all(target_radius)
 	style.content_margin_left   = 14
 	style.content_margin_right  = 14
 	style.content_margin_top    = 12
 	style.content_margin_bottom = 12
 	return style
+
+
+# ── Helper for badge translation ──
+func _badge_title(badge_name: String) -> String:
+	match badge_name:
+		"Rhythm Champion": return "Quán quân nhịp điệu"
+		"Quick Learner": return "Học nhanh"
+		"Melody Master": return "Bậc thầy giai điệu"
+		"Practice Logged": return "Đã ghi nhận luyện tập"
+		_: return badge_name
+
+func _apply_responsive_layout() -> void:
+	var w: float = get_viewport().get_visible_rect().size.x
+	var desktop := w >= 800
+	
+	# Co giãn header
+	if is_instance_valid(header_panel):
+		header_panel.offset_left = 16 if not desktop else 24
+		header_panel.offset_right = -16 if not desktop else -24
+		header_panel.offset_top = 10 if not desktop else 20
+		header_panel.offset_bottom = 68 if not desktop else 78
+
+	# Co giãn footer
+	if is_instance_valid(footer_panel):
+		footer_panel.offset_left = 16 if not desktop else 24
+		footer_panel.offset_right = -16 if not desktop else -24
+		footer_panel.offset_top = -68
+		footer_panel.offset_bottom = -16
+
+	# Co giãn làn chạy nhịp điệu (Rhythm Match)
+	if is_instance_valid(rm_lane):
+		var lane_w: float = min(680.0, w - 24.0)
+		rm_lane.custom_minimum_size = Vector2(lane_w, 160)
+		rm_lane.offset_left = -lane_w * 0.5
+		rm_lane.offset_right = lane_w * 0.5
+		
+		# Co giãn vị trí HitZone tương thích mobile
+		if is_instance_valid(rm_hit_zone):
+			var hit_left: float = lane_w * 0.23
+			rm_hit_zone.offset_left = hit_left
+			rm_hit_zone.offset_right = hit_left + 14.0
+
+	# Co giãn Quiz panel
+	var q_panel: Node = content_area.find_child("q_panel", true, false)
+	if q_panel == null and content_area.get_child_count() > 0:
+		var first := content_area.get_child(0)
+		if first is PanelContainer:
+			q_panel = first
+	if q_panel:
+		var q_w: float = min(640.0, w - 24.0)
+		(q_panel as Control).custom_minimum_size = Vector2(q_w, 360)
+		(q_panel as Control).offset_left = -q_w * 0.5
+		(q_panel as Control).offset_right = q_w * 0.5
+		
+		# Đổi số lượng cột trắc nghiệm nq_options
+		var grid: Node = q_panel.find_child("GridContainer", true, false)
+		if grid == null:
+			for child in q_panel.get_child(0).get_children():
+				if child is GridContainer:
+					grid = child
+					break
+		if grid:
+			(grid as GridContainer).columns = 1 if not desktop else 2
+			for btn in nq_options:
+				if is_instance_valid(btn):
+					(btn as Control).custom_minimum_size = Vector2(q_w - 56.0 if not desktop else 270.0, 48.0)
+
+	# Co giãn Melody slots
+	var slots_container: Node = content_area.find_child("slots_container", true, false)
+	if slots_container == null and content_area.get_child_count() > 1:
+		for child in content_area.get_children():
+			if child is HBoxContainer:
+				slots_container = child
+				break
+	if slots_container:
+		var slots_w: float = min(800.0, w - 20.0)
+		(slots_container as Control).offset_left = -slots_w * 0.5
+		(slots_container as Control).offset_right = slots_w * 0.5
+		
+		# Co giãn kích thước từng slot panel
+		for slot in slots_container.get_children():
+			if slot is PanelContainer:
+				slot.custom_minimum_size = Vector2(56 if not desktop else 80, 56 if not desktop else 80)
+				var vbox := slot.get_child(0)
+				if vbox and vbox.get_child_count() >= 2:
+					var note_lbl = vbox.get_child(1)
+					if note_lbl is Label:
+						note_lbl.add_theme_font_size_override("font_size", 16 if not desktop else 22)
+
+	# Co giãn Melody options palette
+	var palette: Node = content_area.find_child("palette", true, false)
+	if palette == null and content_area.get_child_count() > 3:
+		var cnt := 0
+		for child in content_area.get_children():
+			if child is HBoxContainer:
+				cnt += 1
+				if cnt == 2:
+					palette = child
+					break
+	if palette:
+		var pal_w: float = min(800.0, w - 20.0)
+		(palette as Control).offset_left = -pal_w * 0.5
+		(palette as Control).offset_right = pal_w * 0.5
+		for btn in mc_note_buttons:
+			if is_instance_valid(btn):
+				(btn as Control).custom_minimum_size = Vector2(52 if not desktop else 74, 44 if not desktop else 52)
+				(btn as Control).add_theme_font_size_override("font_size", 14 if not desktop else 18)
