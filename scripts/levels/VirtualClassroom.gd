@@ -68,7 +68,7 @@ var lessons: Array[Dictionary] = [
 	{
 		"lesson_id":       "db_001",
 		"instrument":      "dan_bau",
-		"title":           "Ná»‘t ÄÆ¡n ÄÃ n Báº§u",
+		"title":           "Nốt Đơn Đàn Bầu",
 		"difficulty":      "Beginner",
 		"required_level":  1,
 		"stars":           0,
@@ -88,6 +88,17 @@ var lessons: Array[Dictionary] = [
 		"beat_map":        [0.0, 0.5, 1.5, 2.0, 3.0]
 	},
 	{
+		"lesson_id":       "db_003",
+		"instrument":      "dan_bau",
+		"title":           "Nhấn Vuốt nâng cao",
+		"difficulty":      "Advanced",
+		"required_level":  7,
+		"stars":           0,
+		"is_unlocked":     false,
+		"reference_audio": "",
+		"beat_map":        [0.0, 0.3, 0.6, 0.9, 1.2, 1.5]
+	},
+	{
 		"lesson_id":       "st_001",
 		"instrument":      "sao_truc",
 		"title":           "Nhịp lấy hơi cơ bản",
@@ -102,12 +113,23 @@ var lessons: Array[Dictionary] = [
 		"lesson_id":       "st_002",
 		"instrument":      "sao_truc",
 		"title":           "Kỹ thuật ngân vang",
-		"difficulty":      "Beginner",
+		"difficulty":      "Intermediate",
 		"required_level":  3,
 		"stars":           0,
 		"is_unlocked":     true,
 		"reference_audio": "",
 		"beat_map":        [0.0, 1.25, 2.5, 3.75]
+	},
+	{
+		"lesson_id":       "st_003",
+		"instrument":      "sao_truc",
+		"title":           "Lưỡng đơn cực nhanh",
+		"difficulty":      "Advanced",
+		"required_level":  6,
+		"stars":           0,
+		"is_unlocked":     false,
+		"reference_audio": "",
+		"beat_map":        [0.0, 0.2, 0.4, 0.6, 0.8, 1.0, 1.2]
 	},
 	{
 		"lesson_id":       "tr_001",
@@ -119,10 +141,32 @@ var lessons: Array[Dictionary] = [
 		"is_unlocked":     true,
 		"reference_audio": "",
 		"beat_map":        [0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0]
+	},
+	{
+		"lesson_id":       "tr_002",
+		"instrument":      "trong",
+		"title":           "Điệu Trống Bông rộn rã",
+		"difficulty":      "Intermediate",
+		"required_level":  3,
+		"stars":           0,
+		"is_unlocked":     true,
+		"reference_audio": "",
+		"beat_map":        [0.0, 0.4, 0.8, 1.2, 1.6, 2.0]
+	},
+	{
+		"lesson_id":       "tr_003",
+		"instrument":      "trong",
+		"title":           "Nhịp trống trận hào hùng",
+		"difficulty":      "Advanced",
+		"required_level":  7,
+		"stars":           0,
+		"is_unlocked":     false,
+		"reference_audio": "",
+		"beat_map":        [0.0, 0.25, 0.5, 0.75, 1.0, 1.25, 1.5]
 	}
 ]
 
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• 
 func _ready() -> void:
 	_wire_signals()
 	_setup_room()
@@ -345,10 +389,13 @@ func _technique_for_lesson(lesson: Dictionary) -> String:
 func _focus_camera(target: Vector2, zoom_value: float) -> void:
 	if camera == null:
 		return
+	var height: float = get_viewport().get_visible_rect().size.y
+	var aspect_scale: float = height / 648.0
+	var final_zoom: float = zoom_value * aspect_scale
 	var tween := create_tween().set_parallel(true)
 	tween.tween_property(camera, "global_position", target, 0.45)\
 		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
-	tween.tween_property(camera, "zoom", Vector2(zoom_value, zoom_value), 0.45)\
+	tween.tween_property(camera, "zoom", Vector2(final_zoom, final_zoom), 0.45)\
 		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 
 func _show_artist_result_feedback(result: Dictionary) -> void:

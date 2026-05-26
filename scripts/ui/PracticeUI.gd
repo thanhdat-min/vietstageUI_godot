@@ -8,16 +8,16 @@ signal practice_finished(result: Dictionary)
 signal practice_cancelled
 
 # ── Colour palette ──────────────────────────────────────────────────────────
-const WOOD_DARK  := Color("281006") # Mahogany Canvas
-const WOOD_PANEL := Color("402011") # Burnt Sienna
-const BRASS      := Color("faae33") # Curry Yellow
-const BRASS_DIM  := Color("823513") # Spiced Orange
-const JADE       := Color("faae33") # Curry Yellow
-const SON_RED    := Color("d1255c") # Chili Red
-const CREAM      := Color("ffffff") # Crisp White
-const MUTED      := Color("9f531b") # Cinnamon Brown / Muted
-const SUCCESS    := Color("faae33") # Curry Yellow
-const STAR_GOLD  := Color("f0c840")
+const WOOD_DARK  := Color("140926") # Deep dark purple
+const WOOD_PANEL := Color("251245") # Royal purple card
+const BRASS      := Color("a44dfa") # Vibrant purple
+const BRASS_DIM  := Color("5d2b9d") # Royal violet dim
+const JADE       := Color("00ebd6") # Neon turquoise
+const SON_RED    := Color("ff3366") # Neon pink/red
+const CREAM      := Color("f5f2ff") # Creamy soft white
+const MUTED      := Color("8f7fa6") # Cool purple-grey
+const SUCCESS    := Color("00ebd6") # Neon turquoise
+const STAR_GOLD  := Color("ffd214")
 
 # ── Session state ───────────────────────────────────────────────────────────
 var lesson: Dictionary = {}
@@ -295,6 +295,47 @@ func _build_hud() -> void:
 	left_box.add_child(_label("Tone Quality", 14, MUTED))
 	tone_bar = _meter(SON_RED)
 	left_box.add_child(tone_bar)
+	
+	# Vector instrument peg/string visualizer (Image 2 style)
+	var instrument_visualizer := Control.new()
+	instrument_visualizer.custom_minimum_size = Vector2(0, 110)
+	instrument_visualizer.draw.connect(func():
+		var inst: String = lesson.get("instrument", "dan_tranh")
+		var w := instrument_visualizer.size.x
+		var h := instrument_visualizer.size.y
+		if w == 0 or h == 0:
+			return
+		var cx := w * 0.5
+		var cy := h * 0.5
+		# Draw vector representation of instrument
+		if inst == "dan_tranh":
+			# Draw Đàn Tranh zither strings
+			for j in range(6):
+				var sy := cy - 30 + j * 12
+				var active_str := (j == 2)
+				instrument_visualizer.draw_line(Vector2(20, sy), Vector2(w - 20, sy), BRASS if active_str else Color(MUTED, 0.32), 2.5 if active_str else 1.2)
+				if active_str:
+					instrument_visualizer.draw_circle(Vector2(w * 0.35, sy), 5.0, JADE)
+		elif inst == "dan_bau":
+			# Draw Đàn Bầu monochord single string and spout
+			instrument_visualizer.draw_line(Vector2(20, cy), Vector2(w - 60, cy), BRASS, 3.0)
+			instrument_visualizer.draw_circle(Vector2(20, cy), 6.0, JADE)
+			# Spout curve
+			instrument_visualizer.draw_arc(Vector2(w - 60, cy - 20), 20.0, 0, PI * 1.5, 16, JADE, 4.0)
+		elif inst == "sao_truc":
+			# Draw Sáo Trúc flute body and finger holes
+			instrument_visualizer.draw_rect(Rect2(20, cy - 10, w - 40, 20), Color("3d1c08"), true)
+			for j in range(6):
+				var hx := 40.0 + j * (w - 80.0) / 5.0
+				instrument_visualizer.draw_circle(Vector2(hx, cy), 6.0, JADE if j == 2 else Color("1a0926"))
+		else: # trong
+			# Draw Trống drum
+			instrument_visualizer.draw_circle(Vector2(cx, cy), 36.0, Color("4a291c"))
+			instrument_visualizer.draw_circle(Vector2(cx, cy), 32.0, CREAM)
+			instrument_visualizer.draw_line(Vector2(cx - 36, cy), Vector2(cx + 36, cy), BRASS, 2.0)
+	)
+	left_box.add_child(_separator())
+	left_box.add_child(instrument_visualizer)
 
 	# ── Breath meter (sáo trúc only) ─────────────────────────────────────────
 	breath_panel = PanelContainer.new()
@@ -446,28 +487,32 @@ func _build_hud() -> void:
 func _build_pitch_arrow() -> Control:
 	var node := Control.new()
 	node.name = "PitchArrow"
-	node.custom_minimum_size = Vector2(0, 28)
+	node.custom_minimum_size = Vector2(0, 36)
 	node.set_meta("diff", 0.0)
 	node.draw.connect(func():
 		var diff: float = node.get_meta("diff", 0.0)
 		var w := node.size.x
 		var h := node.size.y
+		if w == 0 or h == 0:
+			return
 		var cx := w * 0.5
 		var cy := h * 0.5
-		# Centre line
-		node.draw_line(Vector2(8, cy), Vector2(w - 8, cy), MUTED, 1.5)
-		# Arrow head position
+		# Simply Guitar style horizontal tuning gauge (Image 2 style)
+		# Draw horizontal line and small tick marks
+		node.draw_line(Vector2(20, cy), Vector2(w - 20, cy), Color(MUTED, 0.4), 2.0)
+		for j in range(21):
+			var tx: float = 20.0 + float(j) * (w - 40.0) / 20.0
+			var tick_h := 12.0 if j % 5 == 0 else 6.0
+			node.draw_line(Vector2(tx, cy - tick_h), Vector2(tx, cy + tick_h), Color(MUTED, 0.5), 1.5)
+		# Center Vertical white target line
+		node.draw_line(Vector2(cx, 4), Vector2(cx, h - 4), Color.WHITE, 3.0)
+		# Slider Position
 		var norm: float = clamp(diff / 50.0, -1.0, 1.0)
-		var arrow_x: float = cx + norm * (w * 0.5 - 14.0)
-		var color := JADE if abs(diff) < 10.0 else (SON_RED if diff > 0.0 else BRASS)
-		# Draw triangle arrow
-		var pts := PackedVector2Array([
-			Vector2(arrow_x, cy - 10),
-			Vector2(arrow_x + 8, cy + 8),
-			Vector2(arrow_x - 8, cy + 8)
-		])
-		node.draw_colored_polygon(pts, color)
-		node.draw_polyline(pts + PackedVector2Array([pts[0]]), color.lightened(0.3), 1.5)
+		var arrow_x: float = cx + norm * (cx - 24.0)
+		# Translucent rounded rect slider cursor
+		var cursor_color := JADE if abs(diff) < 10.0 else (SON_RED if diff > 0.0 else BRASS)
+		node.draw_rect(Rect2(arrow_x - 12.0, cy - 14.0, 24.0, 28.0), Color(cursor_color, 0.46), true)
+		node.draw_rect(Rect2(arrow_x - 12.0, cy - 14.0, 24.0, 28.0), cursor_color, false, 2.0)
 	)
 	return node
 
@@ -619,6 +664,17 @@ func _button(text: String, bg: Color, fg: Color) -> Button:
 	button.add_theme_stylebox_override("normal",  _panel_style(bg, bg.lightened(0.16), 1296))
 	button.add_theme_stylebox_override("hover",   _panel_style(bg.lightened(0.1), BRASS, 1296))
 	button.add_theme_stylebox_override("pressed", _panel_style(bg.darkened(0.12), BRASS, 1296))
+	
+	# Premium hover scale animation
+	button.pivot_offset = button.custom_minimum_size * 0.5
+	button.mouse_entered.connect(func():
+		var tween := button.create_tween()
+		tween.tween_property(button, "scale", Vector2(1.04, 1.04), 0.15).set_trans(Tween.TRANS_SINE)
+	)
+	button.mouse_exited.connect(func():
+		var tween := button.create_tween()
+		tween.tween_property(button, "scale", Vector2.ONE, 0.15).set_trans(Tween.TRANS_SINE)
+	)
 	return button
 
 func _panel_style(bg: Color, border: Color, radius: int) -> StyleBoxFlat:
@@ -634,6 +690,10 @@ func _panel_style(bg: Color, border: Color, radius: int) -> StyleBoxFlat:
 	style.content_margin_right  = 14
 	style.content_margin_top    = 12
 	style.content_margin_bottom = 12
+	# Premium modern drop shadow config
+	style.shadow_color = Color(0, 0, 0, 0.42)
+	style.shadow_size = 10
+	style.shadow_offset = Vector2(0, 5)
 	return style
 
 func _bar_bg() -> StyleBoxFlat:
@@ -678,21 +738,47 @@ func _apply_responsive_layout() -> void:
 	var sz := get_viewport().get_visible_rect().size
 	var w := sz.x
 	var h := sz.y
-	var desktop := w >= 800
+	var desktop := true # Force landscape widescreen tablet layout matching Simply Guitar
 	
 	var left_panel: Node = find_child("AccuracyMeter", true, false)
 	var right_panel: Node = find_child("ScorePanel", true, false)
 	
 	# Co giãn làn chạy nhạc (rhythm lane)
+	var is_narrow := (w < 1100.0)
+	var lane_w: float = 500.0 if is_narrow else min(620.0, w - 24.0)
 	if is_instance_valid(rhythm_lane):
-		var lane_w: float = min(620.0, w - 24.0)
 		rhythm_lane.custom_minimum_size = Vector2(lane_w, 146)
 		rhythm_lane.offset_left = -lane_w * 0.5
 		rhythm_lane.offset_right = lane_w * 0.5
 		
 	if desktop:
-		if left_panel: (left_panel as Control).show()
-		if right_panel: (right_panel as Control).show()
+		if left_panel: 
+			var lp := left_panel as Control
+			lp.show()
+			if is_narrow:
+				lp.offset_left = 18
+				lp.offset_right = 198
+				lp.offset_top = 80
+				lp.offset_bottom = -16
+			else:
+				lp.offset_left = 18
+				lp.offset_right = 276
+				lp.offset_top = 108
+				lp.offset_bottom = -120
+		if right_panel: 
+			var rp := right_panel as Control
+			rp.show()
+			if is_narrow:
+				rp.offset_left = -198
+				rp.offset_right = -18
+				rp.offset_top = 80
+				rp.offset_bottom = -16
+			else:
+				rp.offset_left = -262
+				rp.offset_right = -18
+				rp.offset_top = 108
+				rp.offset_bottom = -120
+				
 		if is_instance_valid(compact_hud): compact_hud.hide()
 		
 		# Căn vị trí làn chạy nhạc ở tâm
@@ -701,18 +787,32 @@ func _apply_responsive_layout() -> void:
 			rhythm_lane.offset_bottom = 73
 			
 		if is_instance_valid(progress_bar):
-			progress_bar.offset_left = 290
-			progress_bar.offset_right = -290
-			progress_bar.offset_top = -88
-			progress_bar.offset_bottom = -64
+			var pb_left := 220 if is_narrow else 290
+			progress_bar.offset_left = pb_left
+			progress_bar.offset_right = -pb_left
+			progress_bar.offset_top = -64 if is_narrow else -88
+			progress_bar.offset_bottom = -44 if is_narrow else -64
 			
 		if is_instance_valid(feedback_label):
-			feedback_label.offset_left = 290
-			feedback_label.offset_right = -290
-			feedback_label.offset_top = -158
-			feedback_label.offset_bottom = -104
+			var fb_left := 220 if is_narrow else 290
+			feedback_label.offset_left = fb_left
+			feedback_label.offset_right = -fb_left
+			feedback_label.offset_top = -122 if is_narrow else -158
+			feedback_label.offset_bottom = -74 if is_narrow else -104
 			
 		if is_instance_valid(waveform_strip):
+			if is_narrow:
+				waveform_strip.custom_minimum_size = Vector2(460, 30)
+				waveform_strip.offset_left = -230
+				waveform_strip.offset_right = 230
+				waveform_strip.offset_top = 90
+				waveform_strip.offset_bottom = 120
+			else:
+				waveform_strip.custom_minimum_size = Vector2(580, 38)
+				waveform_strip.offset_left = -290
+				waveform_strip.offset_right = 290
+				waveform_strip.offset_top = 100
+				waveform_strip.offset_bottom = 138
 			waveform_strip.show()
 	else:
 		if left_panel: (left_panel as Control).hide()

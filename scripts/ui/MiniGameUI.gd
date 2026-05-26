@@ -8,17 +8,17 @@ signal minigame_finished(result: Dictionary)
 signal minigame_cancelled
 
 # ── Colour palette (matches project theme) ─────────────────────────────────
-const WOOD_DARK  := Color("281006") # Mahogany Canvas
-const WOOD_PANEL := Color("402011") # Burnt Sienna
-const BRASS      := Color("faae33") # Curry Yellow
-const BRASS_DIM  := Color("823513") # Spiced Orange
-const JADE       := Color("faae33") # Curry Yellow
-const SON_RED    := Color("d1255c") # Chili Red
-const CREAM      := Color("ffffff") # Crisp White
-const MUTED      := Color("9f531b") # Cinnamon Brown / Muted
-const SHADOW     := Color(0.03, 0.02, 0.015, 0.82)
-const STAR_GOLD  := Color("f0c840")
-const SUCCESS    := Color("3ec97a")
+const WOOD_DARK  := Color("140926") # Deep dark purple
+const WOOD_PANEL := Color("251245") # Royal purple card
+const BRASS      := Color("a44dfa") # Vibrant purple
+const BRASS_DIM  := Color("5d2b9d") # Royal violet dim
+const JADE       := Color("00ebd6") # Neon turquoise
+const SON_RED    := Color("ff3366") # Neon pink/red
+const CREAM      := Color("f5f2ff") # Creamy soft white
+const MUTED      := Color("8f7fa6") # Cool purple-grey
+const SHADOW     := Color(0.04, 0.02, 0.07, 0.85)
+const STAR_GOLD  := Color("ffd214")
+const SUCCESS    := Color("00ebd6")
 
 # ── Mini-game types ─────────────────────────────────────────────────────────
 enum MiniType { RHYTHM_MATCH, NOTE_QUIZ, MELODY_COMPLETION }
@@ -874,6 +874,17 @@ func _button(text: String, bg: Color, fg: Color) -> Button:
 	button.add_theme_stylebox_override("normal",  _panel_style(bg, bg.lightened(0.18), 1296))
 	button.add_theme_stylebox_override("hover",   _panel_style(bg.lightened(0.1), BRASS, 1296))
 	button.add_theme_stylebox_override("pressed", _panel_style(bg.darkened(0.12), BRASS, 1296))
+	
+	# Premium hover scale animation
+	button.pivot_offset = button.custom_minimum_size * 0.5
+	button.mouse_entered.connect(func():
+		var tween := button.create_tween()
+		tween.tween_property(button, "scale", Vector2(1.04, 1.04), 0.15).set_trans(Tween.TRANS_SINE)
+	)
+	button.mouse_exited.connect(func():
+		var tween := button.create_tween()
+		tween.tween_property(button, "scale", Vector2.ONE, 0.15).set_trans(Tween.TRANS_SINE)
+	)
 	return button
 
 func _panel_style(bg: Color, border: Color, radius: int) -> StyleBoxFlat:
@@ -889,6 +900,10 @@ func _panel_style(bg: Color, border: Color, radius: int) -> StyleBoxFlat:
 	style.content_margin_right  = 14
 	style.content_margin_top    = 12
 	style.content_margin_bottom = 12
+	# Premium modern drop shadow config
+	style.shadow_color = Color(0, 0, 0, 0.42)
+	style.shadow_size = 10
+	style.shadow_offset = Vector2(0, 5)
 	return style
 
 
@@ -903,7 +918,7 @@ func _badge_title(badge_name: String) -> String:
 
 func _apply_responsive_layout() -> void:
 	var w: float = get_viewport().get_visible_rect().size.x
-	var desktop := w >= 800
+	var desktop := false # Optimized exclusively for phone/mobile
 	
 	# Co giãn header
 	if is_instance_valid(header_panel):
@@ -940,9 +955,12 @@ func _apply_responsive_layout() -> void:
 			q_panel = first
 	if q_panel:
 		var q_w: float = min(640.0, w - 24.0)
-		(q_panel as Control).custom_minimum_size = Vector2(q_w, 360)
+		var q_h: float = min(270.0, get_viewport().get_visible_rect().size.y - 140.0)
+		(q_panel as Control).custom_minimum_size = Vector2(q_w, q_h)
 		(q_panel as Control).offset_left = -q_w * 0.5
 		(q_panel as Control).offset_right = q_w * 0.5
+		(q_panel as Control).offset_top = -q_h * 0.5
+		(q_panel as Control).offset_bottom = q_h * 0.5
 		
 		# Đổi số lượng cột trắc nghiệm nq_options
 		var grid: Node = q_panel.find_child("GridContainer", true, false)

@@ -14,19 +14,19 @@ signal request_next_lesson
 signal request_start_minigame(type: int)
 
 # ── Colour palette ───────────────────────────────────────────────────────────
-const WOOD_DARK   := Color("281006") # Mahogany Canvas
-const WOOD_PANEL  := Color("402011") # Burnt Sienna
-const BRASS       := Color("faae33") # Curry Yellow
-const BRASS_DIM   := Color("823513") # Spiced Orange
-const JADE        := Color("faae33") # Curry Yellow
-const SON_RED     := Color("d1255c") # Chili Red
-const CREAM       := Color("ffffff") # Crisp White
-const MUTED       := Color("9f531b") # Cinnamon Brown / Muted
-const SHADOW      := Color(0.03, 0.02, 0.015, 0.78)
-const STAR_GOLD   := Color("f0c840")
-const SUCCESS     := Color("3ec97a")
-const STREAK_ORG  := Color("e87c28")
-const LOCKED_GREY := Color("4a4035")
+const WOOD_DARK   := Color("140926") # Deep dark purple
+const WOOD_PANEL  := Color("251245") # Royal purple card
+const BRASS       := Color("a44dfa") # Vibrant purple
+const BRASS_DIM   := Color("5d2b9d") # Royal violet dim
+const JADE        := Color("00ebd6") # Neon turquoise
+const SON_RED     := Color("ff3366") # Neon pink/red
+const CREAM       := Color("f5f2ff") # Creamy soft white
+const MUTED       := Color("8f7fa6") # Cool purple-grey
+const SHADOW      := Color(0.04, 0.02, 0.07, 0.85)
+const STAR_GOLD   := Color("ffd214")
+const SUCCESS     := Color("00ebd6")
+const STREAK_ORG  := Color("ff7a00")
+const LOCKED_GREY := Color("413654")
 
 # ── Gamification state ───────────────────────────────────────────────────────
 var gamification: Dictionary = {
@@ -63,7 +63,7 @@ var daily_challenge:   Control
 var xp_bar:            ProgressBar
 var xp_label:          Label
 var title_label:       Label
-var lesson_list:       VBoxContainer
+var lesson_list:       Container
 var leaderboard_list:  VBoxContainer
 var badges_grid:       GridContainer
 var dashboard_scroll:  ScrollContainer
@@ -255,37 +255,67 @@ func _build_login_overlay() -> void:
 	var card := PanelContainer.new()
 	card.name = "LoginCard"
 	card.set_anchors_preset(Control.PRESET_CENTER)
-	card.custom_minimum_size = Vector2(480, 560)
-	card.offset_left   = -240
-	card.offset_top    = -280
-	card.offset_right  = 240
-	card.offset_bottom = 280
+	card.custom_minimum_size = Vector2(680, 320)
+	card.offset_left   = -340
+	card.offset_top    = -160
+	card.offset_right  = 340
+	card.offset_bottom = 160
 	card.add_theme_stylebox_override("panel", _panel_style(Color(0.08, 0.045, 0.03, 0.94), BRASS, 16))
 	login_overlay.add_child(card)
 
-	# Add proper margins/padding inside the card using MarginContainer
-	var margin_container := MarginContainer.new()
-	margin_container.add_theme_constant_override("margin_left", 36)
-	margin_container.add_theme_constant_override("margin_right", 36)
-	margin_container.add_theme_constant_override("margin_top", 36)
-	margin_container.add_theme_constant_override("margin_bottom", 36)
-	card.add_child(margin_container)
+	# Main horizontal box splitting left and right
+	var main_hbox := HBoxContainer.new()
+	main_hbox.add_theme_constant_override("separation", 24)
+	main_hbox.set_anchors_preset(Control.PRESET_FULL_RECT)
+	main_hbox.offset_left = 20
+	main_hbox.offset_top = 20
+	main_hbox.offset_right = -20
+	main_hbox.offset_bottom = -20
+	card.add_child(main_hbox)
 
-	var vbox := VBoxContainer.new()
-	vbox.add_theme_constant_override("separation", 18)
-	margin_container.add_child(vbox)
+	# ─── Left Column (Brand & Tabs) ───
+	var left_col := VBoxContainer.new()
+	left_col.custom_minimum_size = Vector2(240, 0)
+	left_col.alignment = BoxContainer.ALIGNMENT_CENTER
+	left_col.add_theme_constant_override("separation", 10)
+	main_hbox.add_child(left_col)
 
-	# Logo / title
-	vbox.add_child(_label("🎵  VietStage", 36, BRASS, HORIZONTAL_ALIGNMENT_CENTER))
-	vbox.add_child(_label("Nghệ Sĩ Ảo — Học Nhạc Cụ Dân Tộc", 15, MUTED, HORIZONTAL_ALIGNMENT_CENTER))
-	vbox.add_child(_hsep())
+	var logo_container := PanelContainer.new()
+	logo_container.custom_minimum_size = Vector2(80, 80)
+	logo_container.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	logo_container.clip_children = CanvasItem.CLIP_CHILDREN_ONLY
+	
+	var logo_style := StyleBoxFlat.new()
+	logo_style.set_corner_radius_all(16)
+	logo_style.bg_color = Color(0, 0, 0, 0)
+	logo_style.border_width_left = 0
+	logo_style.border_width_right = 0
+	logo_style.border_width_top = 0
+	logo_style.border_width_bottom = 0
+	logo_container.add_theme_stylebox_override("panel", logo_style)
+	
+	var logo_rect := TextureRect.new()
+	var logo_tex = load("res://images/logoVietStage.jpg")
+	if logo_tex:
+		logo_rect.texture = logo_tex
+	logo_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	logo_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	logo_rect.custom_minimum_size = Vector2(80, 80)
+	logo_container.add_child(logo_rect)
+	left_col.add_child(logo_container)
+
+	var brand_lbl := _label("VietStage", 24, BRASS, HORIZONTAL_ALIGNMENT_CENTER)
+	if font_bold:
+		brand_lbl.add_theme_font_override("font", font_bold)
+	left_col.add_child(brand_lbl)
+	left_col.add_child(_label("Nghệ Sĩ Ảo — Học Nhạc Cụ Dân Tộc", 12, MUTED, HORIZONTAL_ALIGNMENT_CENTER))
+	left_col.add_child(_hsep())
 
 	# Segmented tab control background capsule
 	var tab_bg := PanelContainer.new()
 	tab_bg.add_theme_stylebox_override("panel", _panel_style(Color(0.06, 0.03, 0.02, 0.8), Color(0.25, 0.16, 0.09), 8))
-	vbox.add_child(tab_bg)
+	left_col.add_child(tab_bg)
 
-	# Tab row: Login | Register
 	var tab_row := HBoxContainer.new()
 	tab_row.alignment = BoxContainer.ALIGNMENT_CENTER
 	tab_row.add_theme_constant_override("separation", 4)
@@ -293,20 +323,40 @@ func _build_login_overlay() -> void:
 	
 	var login_tab  := _tab_button("Đăng nhập",  true)
 	var reg_tab    := _tab_button("Đăng ký",    false)
+	login_tab.custom_minimum_size = Vector2(96, 36)
+	reg_tab.custom_minimum_size = Vector2(96, 36)
 	tab_row.add_child(login_tab)
 	tab_row.add_child(reg_tab)
 
-	# Form container (switches between login / register)
-	var form_stack := Control.new()
-	form_stack.custom_minimum_size = Vector2(0, 200)
-	vbox.add_child(form_stack)
+	# Vertical separator between left and right column
+	var v_sep := VSeparator.new()
+	v_sep.add_theme_color_override("color", Color(MUTED, 0.18))
+	main_hbox.add_child(v_sep)
+
+	# ─── Right Column (Scrollable Forms & Guest) ───
+	var right_col := ScrollContainer.new()
+	right_col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	right_col.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	right_col.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	main_hbox.add_child(right_col)
+
+	var right_margin := MarginContainer.new()
+	right_margin.add_theme_constant_override("margin_left", 8)
+	right_margin.add_theme_constant_override("margin_right", 8)
+	right_margin.add_theme_constant_override("margin_top", 4)
+	right_margin.add_theme_constant_override("margin_bottom", 4)
+	right_margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	right_col.add_child(right_margin)
+
+	var right_vbox := VBoxContainer.new()
+	right_vbox.add_theme_constant_override("separation", 10)
+	right_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	right_margin.add_child(right_vbox)
 
 	var login_form  := _build_login_form()
 	var reg_form    := _build_register_form()
-	login_form.set_anchors_preset(Control.PRESET_FULL_RECT)
-	reg_form.set_anchors_preset(Control.PRESET_FULL_RECT)
-	form_stack.add_child(login_form)
-	form_stack.add_child(reg_form)
+	right_vbox.add_child(login_form)
+	right_vbox.add_child(reg_form)
 	reg_form.hide()
 
 	login_tab.pressed.connect(func():
@@ -328,17 +378,17 @@ func _build_login_overlay() -> void:
 		login_tab.add_theme_color_override("font_color", CREAM)
 	)
 
-	vbox.add_child(_hsep())
-	vbox.add_child(_label("Hoặc chơi ngay không cần tài khoản:", 13, MUTED, HORIZONTAL_ALIGNMENT_CENTER))
+	right_vbox.add_child(_hsep())
+	right_vbox.add_child(_label("Hoặc chơi ngay không cần tài khoản:", 12, MUTED, HORIZONTAL_ALIGNMENT_CENTER))
 	var guest_btn := _button("▶  Chơi Thử (Guest)", JADE, WOOD_DARK)
-	guest_btn.add_theme_font_size_override("font_size", 17)
-	guest_btn.custom_minimum_size = Vector2(0, 48)
+	guest_btn.add_theme_font_size_override("font_size", 15)
+	guest_btn.custom_minimum_size = Vector2(0, 42)
 	guest_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	guest_btn.pressed.connect(func():
 		login_overlay.hide()
 		show_dashboard()
 	)
-	vbox.add_child(guest_btn)
+	right_vbox.add_child(guest_btn)
 
 func _build_login_form() -> Control:
 	var vbox := VBoxContainer.new()
@@ -406,33 +456,54 @@ func _build_dashboard_screen() -> void:
 	shade.color = SHADOW
 	dashboard.add_child(shade)
 
-	# ── Left slim navigation (LeftNav) ──
+	# ── Left slim navigation (LeftNav) - Floating Translucent Glass Dock ──
 	left_nav_bar = PanelContainer.new()
 	left_nav_bar.name = "LeftNavBar"
 	left_nav_bar.set_anchors_preset(Control.PRESET_LEFT_WIDE)
-	left_nav_bar.offset_left = 0
-	left_nav_bar.offset_top = 0
-	left_nav_bar.offset_right = 104
-	left_nav_bar.offset_bottom = 0
-	left_nav_bar.add_theme_stylebox_override("panel", _panel_style(Color(0.1, 0.05, 0.035, 0.98), Color(0.25, 0.16, 0.09), 0))
+	left_nav_bar.offset_left = 18
+	left_nav_bar.offset_top = 18
+	left_nav_bar.offset_right = 118
+	left_nav_bar.offset_bottom = -18
+	left_nav_bar.add_theme_stylebox_override("panel", _panel_style(Color("160b33", 0.88), BRASS, 20))
 	dashboard.add_child(left_nav_bar)
 
 	var nav_margin := MarginContainer.new()
-	nav_margin.add_theme_constant_override("margin_top", 24)
-	nav_margin.add_theme_constant_override("margin_bottom", 24)
+	nav_margin.add_theme_constant_override("margin_top", 8)
+	nav_margin.add_theme_constant_override("margin_bottom", 8)
 	nav_margin.add_theme_constant_override("margin_left", 8)
 	nav_margin.add_theme_constant_override("margin_right", 8)
 	left_nav_bar.add_child(nav_margin)
 
 	var nav_vbox := VBoxContainer.new()
-	nav_vbox.add_theme_constant_override("separation", 18)
+	nav_vbox.add_theme_constant_override("separation", 6)
 	nav_margin.add_child(nav_vbox)
 
-	# App Logo
-	var app_logo := _label("🎋\nVietStage", 14, BRASS, HORIZONTAL_ALIGNMENT_CENTER)
-	if font_bold:
-		app_logo.add_theme_font_override("font", font_bold)
-	nav_vbox.add_child(app_logo)
+	# App Logo - VietStage branding with rounded corners
+	var logo_panel := PanelContainer.new()
+	logo_panel.custom_minimum_size = Vector2(60, 60)
+	logo_panel.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	var logo_sb := StyleBoxFlat.new()
+	logo_sb.set_corner_radius_all(12)
+	logo_sb.bg_color = Color(0.08, 0.04, 0.16, 0.9)
+	logo_sb.border_color = BRASS
+	logo_sb.set_border_width_all(2)
+	logo_sb.content_margin_left = 0
+	logo_sb.content_margin_right = 0
+	logo_sb.content_margin_top = 0
+	logo_sb.content_margin_bottom = 0
+	logo_panel.add_theme_stylebox_override("panel", logo_sb)
+	logo_panel.clip_children = CanvasItem.CLIP_CHILDREN_ONLY
+	
+	var logo_rect := TextureRect.new()
+	var logo_tex = load("res://images/logoVietStage.jpg")
+	if logo_tex:
+		logo_rect.texture = logo_tex
+	logo_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	logo_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	logo_rect.set_anchors_preset(Control.PRESET_FULL_RECT)
+	logo_rect.custom_minimum_size = Vector2(60, 60)
+	logo_panel.add_child(logo_rect)
+	nav_vbox.add_child(logo_panel)
 	
 	var nav_sep := _hsep()
 	nav_vbox.add_child(nav_sep)
@@ -443,51 +514,54 @@ func _build_dashboard_screen() -> void:
 
 	# Courses tab button
 	tab_btn_courses = Button.new()
-	tab_btn_courses.custom_minimum_size = Vector2(88, 76)
+	tab_btn_courses.custom_minimum_size = Vector2(88, 48)
 	tab_btn_courses.add_theme_stylebox_override("normal", act_style)
 	tab_btn_courses.add_theme_stylebox_override("hover", _panel_style(Color(CREAM, 0.08), Color(BRASS, 0.25), 12))
 	tab_btn_courses.pressed.connect(func(): _on_tab_pressed("courses"))
 	var btn_vbox := VBoxContainer.new()
 	btn_vbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	btn_vbox.add_theme_constant_override("separation", 2)
 	btn_vbox.set_anchors_preset(Control.PRESET_FULL_RECT)
 	tab_btn_courses.add_child(btn_vbox)
 	
-	var icon1 := _label("🎓", 22, WOOD_DARK, HORIZONTAL_ALIGNMENT_CENTER)
-	var lbl1 := _label("Khóa học", 11, WOOD_DARK, HORIZONTAL_ALIGNMENT_CENTER)
+	var icon1 := _label("🎓", 18, WOOD_DARK, HORIZONTAL_ALIGNMENT_CENTER)
+	var lbl1 := _label("Khóa học", 9, WOOD_DARK, HORIZONTAL_ALIGNMENT_CENTER)
 	btn_vbox.add_child(icon1)
 	btn_vbox.add_child(lbl1)
 	nav_vbox.add_child(tab_btn_courses)
 
 	# Songs/Library tab button
 	tab_btn_library = Button.new()
-	tab_btn_library.custom_minimum_size = Vector2(88, 76)
+	tab_btn_library.custom_minimum_size = Vector2(88, 48)
 	tab_btn_library.add_theme_stylebox_override("normal", inact_style)
 	tab_btn_library.add_theme_stylebox_override("hover", _panel_style(Color(CREAM, 0.08), Color(BRASS, 0.25), 12))
 	tab_btn_library.pressed.connect(func(): _on_tab_pressed("library"))
 	var btn_vbox2 := VBoxContainer.new()
 	btn_vbox2.alignment = BoxContainer.ALIGNMENT_CENTER
+	btn_vbox2.add_theme_constant_override("separation", 2)
 	btn_vbox2.set_anchors_preset(Control.PRESET_FULL_RECT)
 	tab_btn_library.add_child(btn_vbox2)
 	
-	var icon2 := _label("🎵", 22, CREAM, HORIZONTAL_ALIGNMENT_CENTER)
-	var lbl2 := _label("Thư viện", 11, CREAM, HORIZONTAL_ALIGNMENT_CENTER)
+	var icon2 := _label("🎵", 18, CREAM, HORIZONTAL_ALIGNMENT_CENTER)
+	var lbl2 := _label("Thư viện", 9, CREAM, HORIZONTAL_ALIGNMENT_CENTER)
 	btn_vbox2.add_child(icon2)
 	btn_vbox2.add_child(lbl2)
 	nav_vbox.add_child(tab_btn_library)
 
 	# Games tab button
 	tab_btn_games = Button.new()
-	tab_btn_games.custom_minimum_size = Vector2(88, 76)
+	tab_btn_games.custom_minimum_size = Vector2(88, 48)
 	tab_btn_games.add_theme_stylebox_override("normal", inact_style)
 	tab_btn_games.add_theme_stylebox_override("hover", _panel_style(Color(CREAM, 0.08), Color(BRASS, 0.25), 12))
 	tab_btn_games.pressed.connect(func(): _on_tab_pressed("games"))
 	var btn_vbox3 := VBoxContainer.new()
 	btn_vbox3.alignment = BoxContainer.ALIGNMENT_CENTER
+	btn_vbox3.add_theme_constant_override("separation", 2)
 	btn_vbox3.set_anchors_preset(Control.PRESET_FULL_RECT)
 	tab_btn_games.add_child(btn_vbox3)
 	
-	var icon3 := _label("🎮", 22, CREAM, HORIZONTAL_ALIGNMENT_CENTER)
-	var lbl3 := _label("Trò chơi", 11, CREAM, HORIZONTAL_ALIGNMENT_CENTER)
+	var icon3 := _label("🎮", 18, CREAM, HORIZONTAL_ALIGNMENT_CENTER)
+	var lbl3 := _label("Trò chơi", 9, CREAM, HORIZONTAL_ALIGNMENT_CENTER)
 	btn_vbox3.add_child(icon3)
 	btn_vbox3.add_child(lbl3)
 	nav_vbox.add_child(tab_btn_games)
@@ -499,17 +573,18 @@ func _build_dashboard_screen() -> void:
 
 	# Room tab button (Play)
 	tab_btn_room = Button.new()
-	tab_btn_room.custom_minimum_size = Vector2(88, 76)
+	tab_btn_room.custom_minimum_size = Vector2(88, 48)
 	tab_btn_room.add_theme_stylebox_override("normal", inact_style)
 	tab_btn_room.add_theme_stylebox_override("hover", _panel_style(Color(CREAM, 0.08), Color(BRASS, 0.25), 12))
 	tab_btn_room.pressed.connect(func(): request_enter_room.emit())
 	var btn_vbox4 := VBoxContainer.new()
 	btn_vbox4.alignment = BoxContainer.ALIGNMENT_CENTER
+	btn_vbox4.add_theme_constant_override("separation", 2)
 	btn_vbox4.set_anchors_preset(Control.PRESET_FULL_RECT)
 	tab_btn_room.add_child(btn_vbox4)
 	
-	var icon4 := _label("🏫", 22, CREAM, HORIZONTAL_ALIGNMENT_CENTER)
-	var lbl4 := _label("Phòng 2.5D", 11, CREAM, HORIZONTAL_ALIGNMENT_CENTER)
+	var icon4 := _label("🏠", 18, CREAM, HORIZONTAL_ALIGNMENT_CENTER)
+	var lbl4 := _label("Phòng 2.5D", 9, CREAM, HORIZONTAL_ALIGNMENT_CENTER)
 	btn_vbox4.add_child(icon4)
 	btn_vbox4.add_child(lbl4)
 	nav_vbox.add_child(tab_btn_room)
@@ -517,11 +592,12 @@ func _build_dashboard_screen() -> void:
 	# ── Main content dashboard container ──
 	dashboard_scroll = ScrollContainer.new()
 	dashboard_scroll.name = "DashboardScroll"
+	dashboard_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	dashboard_scroll.set_anchors_preset(Control.PRESET_FULL_RECT)
-	dashboard_scroll.offset_left = 124
-	dashboard_scroll.offset_top = 20
-	dashboard_scroll.offset_right = -24
-	dashboard_scroll.offset_bottom = -20
+	dashboard_scroll.offset_left = 170
+	dashboard_scroll.offset_top = 18
+	dashboard_scroll.offset_right = -18
+	dashboard_scroll.offset_bottom = -18
 	dashboard.add_child(dashboard_scroll)
 
 	dashboard_main = VBoxContainer.new()
@@ -613,6 +689,7 @@ func _build_dashboard_screen() -> void:
 
 	# ── Horizontal Scrolling Roadmap ──
 	roadmap_scroll = ScrollContainer.new()
+	roadmap_scroll.custom_minimum_size = Vector2(0, 216) # 200px cards + 16px scrollbar track
 	roadmap_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	roadmap_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	roadmap_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
@@ -632,17 +709,18 @@ func _build_dashboard_screen() -> void:
 	dashboard_games_panel.hide()
 
 	games_vbox = VBoxContainer.new()
-	games_vbox.add_theme_constant_override("separation", 16)
+	games_vbox.add_theme_constant_override("separation", 10)
 	games_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	dashboard_games_panel.add_child(games_vbox)
 
-	games_vbox.add_child(_label("🎲  Trò chơi luyện tập", 22, BRASS))
+	games_vbox.add_child(_label("🎲  Trò chơi luyện tập", 20, BRASS))
 
 	var games_grid := GridContainer.new()
 	games_grid.columns = 3
-	games_grid.add_theme_constant_override("h_separation", 16)
-	games_grid.add_theme_constant_override("v_separation", 16)
+	games_grid.add_theme_constant_override("h_separation", 12)
+	games_grid.add_theme_constant_override("v_separation", 12)
 	games_grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	games_grid.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	games_vbox.add_child(games_grid)
 
 	var game_list := [
@@ -652,29 +730,31 @@ func _build_dashboard_screen() -> void:
 	]
 	for g in game_list:
 		var gcard := PanelContainer.new()
-		gcard.custom_minimum_size = Vector2(250, 180)
-		gcard.add_theme_stylebox_override("panel", _panel_style(Color(0.12, 0.06, 0.04, 0.95), Color(0.25, 0.16, 0.09), 16))
+		gcard.custom_minimum_size = Vector2(0, 0)
+		gcard.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		gcard.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		gcard.add_theme_stylebox_override("panel", _panel_style(Color(0.12, 0.06, 0.04, 0.95), Color(0.25, 0.16, 0.09), 14))
 		games_grid.add_child(gcard)
 
 		var gmargin := MarginContainer.new()
-		gmargin.add_theme_constant_override("margin_left", 14)
-		gmargin.add_theme_constant_override("margin_right", 14)
-		gmargin.add_theme_constant_override("margin_top", 14)
-		gmargin.add_theme_constant_override("margin_bottom", 14)
+		gmargin.add_theme_constant_override("margin_left", 10)
+		gmargin.add_theme_constant_override("margin_right", 10)
+		gmargin.add_theme_constant_override("margin_top", 10)
+		gmargin.add_theme_constant_override("margin_bottom", 10)
 		gcard.add_child(gmargin)
 
 		var gbox := VBoxContainer.new()
-		gbox.add_theme_constant_override("separation", 10)
+		gbox.add_theme_constant_override("separation", 6)
 		gmargin.add_child(gbox)
 
-		gbox.add_child(_label(g[0], 18, CREAM))
-		var desc := _label(g[1], 12, MUTED)
+		gbox.add_child(_label(g[0], 16, CREAM))
+		var desc := _label(g[1], 11, MUTED)
 		desc.autowrap_mode = TextServer.AUTOWRAP_WORD
 		desc.size_flags_vertical = Control.SIZE_EXPAND_FILL
 		gbox.add_child(desc)
 
 		var gbtn := _button("CHƠI NGAY", BRASS, WOOD_DARK)
-		gbtn.custom_minimum_size = Vector2(0, 36)
+		gbtn.custom_minimum_size = Vector2(0, 32)
 		gbtn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		var t: int = g[2]
 		gbtn.pressed.connect(func(): request_start_minigame.emit(t))
@@ -783,37 +863,58 @@ func _room_nav_button(text: String, callback: Callable) -> Button:
 func _build_lesson_panel() -> void:
 	lesson_panel = PanelContainer.new()
 	lesson_panel.name = "LessonSelectPanel"
-	lesson_panel.set_anchors_preset(Control.PRESET_RIGHT_WIDE)
-	lesson_panel.offset_left   = -440
-	lesson_panel.offset_top    = 92
-	lesson_panel.offset_right  = -18
-	lesson_panel.offset_bottom = -92
-	lesson_panel.add_theme_stylebox_override("panel", _panel_style(Color(0.1, 0.055, 0.035, 0.96), BRASS, 10))
+	lesson_panel.add_theme_stylebox_override("panel", _panel_style(Color("140926", 0.96), BRASS, 16))
 	root.add_child(lesson_panel)
 
+	# Use MarginContainer to pad the panel content beautifully
+	var margin_container := MarginContainer.new()
+	margin_container.add_theme_constant_override("margin_left", 24)
+	margin_container.add_theme_constant_override("margin_right", 24)
+	margin_container.add_theme_constant_override("margin_top", 20)
+	margin_container.add_theme_constant_override("margin_bottom", 20)
+	lesson_panel.add_child(margin_container)
+
 	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 12)
-	lesson_panel.add_child(box)
-	title_label = _label("Bài học", 26, BRASS)
-	box.add_child(title_label)
-	box.add_child(_label("Chọn bài học → Xem nghệ sĩ biểu diễn → Luyện tập.", 13, MUTED))
+	box.add_theme_constant_override("separation", 14)
+	margin_container.add_child(box)
 	
+	# Header with title and Back button next to each other
+	var header := HBoxContainer.new()
+	header.add_theme_constant_override("separation", 24)
+	box.add_child(header)
+	
+	var close := _button("← Trở về phòng", WOOD_PANEL, CREAM)
+	close.pressed.connect(func():
+		lesson_panel.hide()
+		request_back_to_room.emit()
+	)
+	header.add_child(close)
+	
+	title_label = _label("Lộ trình bài học", 26, BRASS)
+	header.add_child(title_label)
+	
+	box.add_child(_label("Chọn bài học để bắt đầu luyện tập và kiểm tra trực tiếp.", 13, MUTED))
+	
+	# Horizontal scrolling circular lesson select menu (Image 3 style)
 	var lesson_scroll := ScrollContainer.new()
 	lesson_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	lesson_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	lesson_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
 	box.add_child(lesson_scroll)
 	
-	lesson_list = VBoxContainer.new()
-	lesson_list.add_theme_constant_override("separation", 10)
-	lesson_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	lesson_list = HBoxContainer.new()
+	lesson_list.add_theme_constant_override("separation", 24)
+	lesson_list.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	lesson_scroll.add_child(lesson_list)
+	
 	box.add_child(_hsep())
 
 	# Mini-game row in lesson panel
 	var mg_row := HBoxContainer.new()
-	mg_row.add_theme_constant_override("separation", 8)
+	mg_row.add_theme_constant_override("separation", 10)
 	mg_row.alignment = BoxContainer.ALIGNMENT_CENTER
 	box.add_child(mg_row)
-	mg_row.add_child(_label("Trò chơi nhỏ:", 14, MUTED))
+	mg_row.add_child(_label("Trò chơi ôn luyện:", 14, MUTED))
 	var rm_btn := _button("🥁 Rhythm", JADE, WOOD_DARK)
 	rm_btn.pressed.connect(func(): request_start_minigame.emit(0))
 	mg_row.add_child(rm_btn)
@@ -823,13 +924,6 @@ func _build_lesson_panel() -> void:
 	var mc_btn := _button("🎼 Melody", JADE, WOOD_DARK)
 	mc_btn.pressed.connect(func(): request_start_minigame.emit(2))
 	mg_row.add_child(mc_btn)
-
-	var close := _button("← Trở về phòng", WOOD_PANEL, CREAM)
-	close.pressed.connect(func():
-		lesson_panel.hide()
-		request_back_to_room.emit()
-	)
-	box.add_child(close)
 
 # ═══════════════════════════════════════════════════════════════════════════
 # RESULT PANEL
@@ -1013,8 +1107,8 @@ func _draw_accuracy_chart(node: Control) -> void:
 	var chart_h := h - pad_t - pad_b
 
 	# Grid lines at 0, 25, 50, 75, 100
-	for pct in [0, 25, 50, 75, 100]:
-		var y := pad_t + chart_h * (1.0 - float(pct) / 100.0)
+	for pct: int in [0, 25, 50, 75, 100]:
+		var y: float = pad_t + chart_h * (1.0 - float(pct) / 100.0)
 		node.draw_line(Vector2(pad_l, y), Vector2(w - pad_r, y), Color(MUTED, 0.2), 1.0)
 		node.draw_string(font_reg if font_reg else ThemeDB.fallback_font, Vector2(2, y + 5), "%d%%" % pct, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, MUTED)
 
@@ -1389,40 +1483,126 @@ func _build_mobile_nav() -> void:
 # ═══════════════════════════════════════════════════════════════════════════
 # Lesson card & dashboard helpers
 # ═══════════════════════════════════════════════════════════════════════════
+func _apply_responsive_layout() -> void:
+	var sz := get_viewport().get_visible_rect().size
+	var width := sz.x
+	var height := sz.y
+	desktop_mode = true # Permanent left navigation landscape view
+	_sync_mobile_nav()
+	_set_top_bar_rect()
+	
+	# Co giãn thẻ Đăng nhập (LoginCard)
+	if is_instance_valid(login_card):
+		var card_w: float = min(680.0, width - 40.0)
+		var card_h: float = min(320.0, height - 24.0)
+		login_card.custom_minimum_size = Vector2(card_w, card_h)
+		login_card.offset_left = -card_w * 0.5
+		login_card.offset_right = card_w * 0.5
+		login_card.offset_top = -card_h * 0.5
+		login_card.offset_bottom = card_h * 0.5
+		
+	# Co giãn Hộp thoại Kết quả (ResultPanel)
+	if is_instance_valid(result_panel):
+		var panel_w: float = min(680.0, width - 40.0)
+		var panel_h: float = min(380.0, height - 32.0)
+		result_panel.custom_minimum_size = Vector2(panel_w, panel_h)
+		result_panel.offset_left = -panel_w * 0.5
+		result_panel.offset_right = panel_w * 0.5
+		result_panel.offset_top = -panel_h * 0.5
+		result_panel.offset_bottom = panel_h * 0.5
+
+	# Simply style horizontal row circular lesson selection panel
+	if is_instance_valid(lesson_panel):
+		lesson_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
+		lesson_panel.offset_left   = 170 # 20px spacer from 150px actual width of LeftNavBar
+		lesson_panel.offset_top    = 18
+		lesson_panel.offset_right  = -18
+		lesson_panel.offset_bottom = -18
+	
+	# Dashboard
+	if is_instance_valid(left_nav_bar):
+		left_nav_bar.show()
+		left_nav_bar.set_anchors_preset(Control.PRESET_LEFT_WIDE)
+		left_nav_bar.offset_left = 18
+		left_nav_bar.offset_top = 18
+		left_nav_bar.offset_right = 118
+		left_nav_bar.offset_bottom = -18
+		
+	if is_instance_valid(dashboard_scroll):
+		dashboard_scroll.offset_left = 170 # 20px spacer from 150px actual width of LeftNavBar
+		dashboard_scroll.offset_top = 18
+		dashboard_scroll.offset_right = -18
+		dashboard_scroll.offset_bottom = -18
+	if is_instance_valid(daily_challenge_main):
+		daily_challenge_main.columns = 2
+
 func _make_lesson_card(lesson: Dictionary) -> Control:
 	var panel := PanelContainer.new()
-	panel.add_theme_stylebox_override("panel", _panel_style(Color(0.16, 0.09, 0.055, 0.96), Color(0.34, 0.23, 0.13), 8))
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 10)
-	panel.add_child(row)
-	# Stars
-	var stars_lbl := _label(_stars_unicode(int(lesson.get("stars", 0))), 18, STAR_GOLD)
-	stars_lbl.custom_minimum_size = Vector2(56, 0)
-	row.add_child(stars_lbl)
-	var info := VBoxContainer.new()
-	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	info.add_theme_constant_override("separation", 2)
-	row.add_child(info)
+	panel.custom_minimum_size = Vector2(130, 130)
+	
 	var locked: bool = not bool(lesson.get("is_unlocked", true))
-	info.add_child(_label(lesson.get("title", "Lesson"), 18, CREAM if not locked else MUTED))
-	info.add_child(_label("%s  •  Cấp độ %d" % [_difficulty_title(lesson.get("difficulty", "Beginner")), int(lesson.get("required_level", 1))], 13, MUTED))
-	var demo_btn := _button("Demo", JADE if not locked else LOCKED_GREY, WOOD_DARK)
-	demo_btn.disabled = locked
-	demo_btn.pressed.connect(func():
+	var stars: int = int(lesson.get("stars", 0))
+	var is_current := (stars == 0 and not locked)
+	
+	# Determine circle style
+	var bg_col := CREAM if is_current else Color("22103f")
+	var border_col := BRASS if is_current else (Color("5d2b9d") if not locked else LOCKED_GREY)
+	
+	# Style box flat circle
+	var style := StyleBoxFlat.new()
+	style.bg_color = bg_col
+	style.border_color = border_col
+	style.set_border_width_all(3 if is_current else 2)
+	style.set_corner_radius_all(1080) # Perfect circle!
+	style.shadow_color = Color(0, 0, 0, 0.2)
+	style.shadow_size = 6
+	style.shadow_offset = Vector2(0, 3)
+	panel.add_theme_stylebox_override("panel", style)
+	
+	var vb := VBoxContainer.new()
+	vb.alignment = BoxContainer.ALIGNMENT_CENTER
+	vb.add_theme_constant_override("separation", 4)
+	panel.add_child(vb)
+	
+	# Icon or state indicator
+	var state_icon := "🔒" if locked else (_stars_unicode(stars) if stars > 0 else "▶")
+	var fg_col := WOOD_DARK if is_current else (CREAM if not locked else MUTED)
+	
+	var icon_lbl := _label(state_icon, 14, fg_col, HORIZONTAL_ALIGNMENT_CENTER)
+	vb.add_child(icon_lbl)
+	
+	var title_lbl := _label(lesson.get("title", "Bài học"), 12, fg_col, HORIZONTAL_ALIGNMENT_CENTER)
+	title_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	title_lbl.custom_minimum_size = Vector2(100, 48)
+	vb.add_child(title_lbl)
+	
+	# Make it interactive: click to start practice!
+	var btn := Button.new()
+	btn.set_anchors_preset(Control.PRESET_FULL_RECT)
+	btn.flat = true
+	btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	btn.add_theme_stylebox_override("normal", StyleBoxEmpty.new())
+	btn.add_theme_stylebox_override("hover", StyleBoxEmpty.new())
+	btn.add_theme_stylebox_override("pressed", StyleBoxEmpty.new())
+	btn.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+	
+	btn.pressed.connect(func():
 		current_lesson = lesson
-		request_start_demo.emit(lesson)
+		if not locked:
+			request_start_practice.emit(lesson)
 	)
-	row.add_child(demo_btn)
-	var prac_btn := _button("Practice", BRASS if not locked else LOCKED_GREY, WOOD_DARK)
-	prac_btn.disabled = locked
-	prac_btn.pressed.connect(func():
-		current_lesson = lesson
-		request_start_practice.emit(lesson)
+	panel.add_child(btn)
+	
+	# Scale hover micro-animation
+	panel.pivot_offset = Vector2(65, 65)
+	panel.mouse_entered.connect(func():
+		var tween := panel.create_tween()
+		tween.tween_property(panel, "scale", Vector2(1.06, 1.06), 0.15).set_trans(Tween.TRANS_SINE)
 	)
-	row.add_child(prac_btn)
-	if locked:
-		var lock_lbl := _label("🔒", 18, MUTED)
-		row.add_child(lock_lbl)
+	panel.mouse_exited.connect(func():
+		var tween := panel.create_tween()
+		tween.tween_property(panel, "scale", Vector2.ONE, 0.15).set_trans(Tween.TRANS_SINE)
+	)
 	return panel
 
 func _dashboard_card(title: String, body: String, accent: Color) -> PanelContainer:
@@ -1507,74 +1687,7 @@ func _refresh_gamification() -> void:
 	_build_leaderboard_rows()
 	_build_badges()
 
-# ═══════════════════════════════════════════════════════════════════════════
-# Responsive layout
-# ═══════════════════════════════════════════════════════════════════════════
-func _apply_responsive_layout() -> void:
-	var width: float = get_viewport().get_visible_rect().size.x
-	desktop_mode = width >= 800
-	_sync_mobile_nav()
-	_set_top_bar_rect()
-	
-	# Co giãn thẻ Đăng nhập (LoginCard)
-	if is_instance_valid(login_card):
-		var card_w: float = min(480.0, width - 32.0)
-		login_card.custom_minimum_size = Vector2(card_w, 560)
-		login_card.offset_left = -card_w * 0.5
-		login_card.offset_right = card_w * 0.5
-		login_card.offset_top = -280
-		login_card.offset_bottom = 280
-		
-	# Co giãn Hộp thoại Kết quả (ResultPanel)
-	if is_instance_valid(result_panel):
-		if desktop_mode:
-			result_panel.custom_minimum_size = Vector2(700, 440)
-			result_panel.offset_left = -350
-			result_panel.offset_right = 350
-			result_panel.offset_top = -220
-			result_panel.offset_bottom = 220
-		else:
-			var res_w: float = min(700.0, width - 24.0)
-			result_panel.custom_minimum_size = Vector2(res_w, 480)
-			result_panel.offset_left = -res_w * 0.5
-			result_panel.offset_right = res_w * 0.5
-			result_panel.offset_top = -240
-			result_panel.offset_bottom = 240
 
-	if desktop_mode:
-		lesson_panel.set_anchors_preset(Control.PRESET_RIGHT_WIDE)
-		lesson_panel.offset_left   = -440
-		lesson_panel.offset_top    = 92
-		lesson_panel.offset_right  = -18
-		lesson_panel.offset_bottom = -92
-		
-		# Dashboard desktop
-		if is_instance_valid(left_nav_bar):
-			left_nav_bar.show()
-		if is_instance_valid(dashboard_scroll):
-			dashboard_scroll.offset_left = 124
-			dashboard_scroll.offset_top = 20
-			dashboard_scroll.offset_right = -24
-			dashboard_scroll.offset_bottom = -20
-		if is_instance_valid(daily_challenge_main):
-			daily_challenge_main.columns = 2
-	else:
-		lesson_panel.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
-		lesson_panel.offset_left   = 10
-		lesson_panel.offset_top    = -440
-		lesson_panel.offset_right  = -10
-		lesson_panel.offset_bottom = -88
-		
-		# Dashboard mobile
-		if is_instance_valid(left_nav_bar):
-			left_nav_bar.hide()
-		if is_instance_valid(dashboard_scroll):
-			dashboard_scroll.offset_left = 18
-			dashboard_scroll.offset_top = 20
-			dashboard_scroll.offset_right = -18
-			dashboard_scroll.offset_bottom = -88
-		if is_instance_valid(daily_challenge_main):
-			daily_challenge_main.columns = 1
 
 func _set_top_bar_rect() -> void:
 	if hud_top == null:
@@ -1618,6 +1731,17 @@ func _button(text: String, bg: Color, fg: Color) -> Button:
 	button.add_theme_stylebox_override("hover",    _panel_style(bg.lightened(0.1), BRASS, 8))
 	button.add_theme_stylebox_override("pressed",  _panel_style(bg.darkened(0.12), BRASS, 8))
 	button.add_theme_stylebox_override("disabled", _panel_style(LOCKED_GREY, LOCKED_GREY, 8))
+	
+	# Premium hover scale animation
+	button.pivot_offset = button.custom_minimum_size * 0.5
+	button.mouse_entered.connect(func():
+		var tween := button.create_tween()
+		tween.tween_property(button, "scale", Vector2(1.04, 1.04), 0.15).set_trans(Tween.TRANS_SINE)
+	)
+	button.mouse_exited.connect(func():
+		var tween := button.create_tween()
+		tween.tween_property(button, "scale", Vector2.ONE, 0.15).set_trans(Tween.TRANS_SINE)
+	)
 	return button
 
 func _tab_button(text: String, active: bool) -> Button:
@@ -1654,14 +1778,15 @@ func _panel_style(bg: Color, border: Color, radius: int) -> StyleBoxFlat:
 	style.bg_color = bg
 	style.border_color = border
 	style.set_border_width_all(2)
-	var target_radius := radius
-	if radius != 1296 and radius != 1224 and radius != 1152 and radius != 1080:
-		target_radius = 6
-	style.set_corner_radius_all(target_radius)
+	style.set_corner_radius_all(radius)
 	style.content_margin_left   = 14
 	style.content_margin_right  = 14
 	style.content_margin_top    = 12
 	style.content_margin_bottom = 12
+	# Premium modern drop shadow config
+	style.shadow_color = Color(0, 0, 0, 0.42)
+	style.shadow_size = 10
+	style.shadow_offset = Vector2(0, 5)
 	return style
 
 func _bar_bg() -> StyleBoxFlat:
@@ -1728,15 +1853,33 @@ func set_lessons(lessons_arr: Array) -> void:
 	all_lessons = lessons_arr
 	_refresh_roadmap()
 
+func _animate_tab_select(btn: Button) -> void:
+	if btn == null or not is_instance_valid(btn):
+		return
+	btn.pivot_offset = btn.custom_minimum_size * 0.5
+	btn.scale = Vector2(0.85, 0.85)
+	var tween := btn.create_tween()
+	tween.tween_property(btn, "scale", Vector2(1.08, 1.08), 0.12)\
+		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	tween.tween_property(btn, "scale", Vector2.ONE, 0.08)\
+		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+
 func _on_tab_pressed(tab_name: String) -> void:
 	current_dashboard_tab = tab_name
 	
-	var act_style := _panel_style(CREAM, BRASS, 12)
-	var inact_style := StyleBoxEmpty.new()
+	var act_style := _panel_style(BRASS, BRASS, 12)
+	var inact_style := _panel_style(Color(0,0,0,0), Color(0,0,0,0), 12)
 	
 	tab_btn_courses.add_theme_stylebox_override("normal", act_style if tab_name == "courses" else inact_style)
 	tab_btn_library.add_theme_stylebox_override("normal", act_style if tab_name == "library" else inact_style)
 	tab_btn_games.add_theme_stylebox_override("normal", act_style if tab_name == "games" else inact_style)
+	
+	if tab_name == "courses":
+		_animate_tab_select(tab_btn_courses)
+	elif tab_name == "library":
+		_animate_tab_select(tab_btn_library)
+	elif tab_name == "games":
+		_animate_tab_select(tab_btn_games)
 	
 	# update label/icon text colors on active buttons
 	if tab_btn_courses.get_child_count() > 0:
@@ -1827,16 +1970,27 @@ func _refresh_roadmap() -> void:
 		
 		# Create Course Card
 		var card := PanelContainer.new()
-		card.custom_minimum_size = Vector2(380, 230)
+		card.custom_minimum_size = Vector2(320, 200)
 		
 		# Glowing border style for active, regular for others
-		var border_color := BRASS if (stars > 0 or not is_locked) else Color(0.25, 0.16, 0.09)
+		var border_color := BRASS if (stars > 0 or not is_locked) else Color("472e6a")
 		if stars == 0 and not is_locked:
 			# Active current lesson has a beautiful bright Curry Yellow glowing border!
 			border_color = BRASS
-			card.add_theme_stylebox_override("panel", _panel_style(Color(0.18, 0.09, 0.05, 0.98), BRASS, 16))
+			card.add_theme_stylebox_override("panel", _panel_style(Color("1c0c3e", 0.94), BRASS, 16))
 		else:
-			card.add_theme_stylebox_override("panel", _panel_style(Color(0.12, 0.06, 0.04, 0.95), border_color, 16))
+			card.add_theme_stylebox_override("panel", _panel_style(Color("140926", 0.9), border_color, 16))
+			
+		# Hover micro-animation for the card
+		card.pivot_offset = card.custom_minimum_size * 0.5
+		card.mouse_entered.connect(func():
+			var tween := card.create_tween()
+			tween.tween_property(card, "scale", Vector2(1.03, 1.03), 0.18).set_trans(Tween.TRANS_SINE)
+		)
+		card.mouse_exited.connect(func():
+			var tween := card.create_tween()
+			tween.tween_property(card, "scale", Vector2.ONE, 0.18).set_trans(Tween.TRANS_SINE)
+		)
 			
 		if is_locked:
 			card.modulate = Color(1.0, 1.0, 1.0, 0.65) # dimmed opacity
@@ -1898,19 +2052,23 @@ func _refresh_roadmap() -> void:
 		var graphic := Panel.new()
 		graphic.custom_minimum_size = Vector2(80, 80)
 		graphic.add_theme_stylebox_override("panel", _panel_style(Color(0.18, 0.1, 0.05, 0.5), Color(0,0,0,0), 8))
-		var g_lbl := _label("🎋" if selected_instrument == "dan_tranh" else ("🎋" if selected_instrument == "sao_truc" else ("violin" if selected_instrument == "dan_bau" else "🥁")), 32, BRASS, HORIZONTAL_ALIGNMENT_CENTER)
-		# Draw the actual emoji or symbol cleanly
-		if selected_instrument == "dan_tranh":
-			g_lbl.text = "🎋"
-		elif selected_instrument == "sao_truc":
-			g_lbl.text = "🎋"
-		elif selected_instrument == "dan_bau":
-			g_lbl.text = "🎻"
-		elif selected_instrument == "trong":
-			g_lbl.text = "🥁"
-		g_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		g_lbl.set_anchors_preset(Control.PRESET_FULL_RECT)
-		graphic.add_child(g_lbl)
+		graphic.clip_children = CanvasItem.CLIP_CHILDREN_ONLY
+		
+		var graphic_rect := TextureRect.new()
+		var tex_path := ""
+		match selected_instrument:
+			"dan_tranh": tex_path = "res://images/thumb_dan_tranh.png"
+			"sao_truc":  tex_path = "res://images/thumb_sao_truc.png"
+			"dan_bau":   tex_path = "res://images/thumb_dan_bau.png"
+			"trong":     tex_path = "res://images/thumb_trong.png"
+		var inst_tex = load(tex_path)
+		if inst_tex:
+			graphic_rect.texture = inst_tex
+		graphic_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		graphic_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+		graphic_rect.custom_minimum_size = Vector2(80, 80)
+		graphic_rect.set_anchors_preset(Control.PRESET_FULL_RECT)
+		graphic.add_child(graphic_rect)
 		right_vbox.add_child(graphic)
 		
 		# Play button / Locked indicator

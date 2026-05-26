@@ -14,6 +14,15 @@ config/name="VietStage"
 run/main_scene="uid://d2tosat0xs0r3"
 config/features=PackedStringArray("4.6", "Mobile")
 
+[display]
+
+window/size/viewport_width=932
+window/size/viewport_height=430
+window/size/window_width_override=1864
+window/size/window_height_override=860
+window/stretch/mode="canvas_items"
+window/stretch/aspect="expand"
+
 [input]
 
 interact={

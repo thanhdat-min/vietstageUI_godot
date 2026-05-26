@@ -1,18 +1,18 @@
 extends Node2D
 class_name ClassroomDecor
 
-const WALL := Color("1f100c")
-const WALL_TRIM := Color("3a1f16")
-const WOOD_DARK := Color("2b1710")
-const WOOD_MID := Color("5a3422")
-const WOOD_LIGHT := Color("7a4a2d")
-const FLOOR_SHADOW := Color("160d0a")
-const BRASS := Color("d7a84a")
-const BRASS_SOFT := Color("b98435")
-const JADE := Color("1f9a8a")
-const SON_RED := Color("8d2f22")
-const CREAM := Color("f4dfb8")
-const MUTED := Color("b99c6b")
+const WALL := Color("1a0b36") # Deep dark violet walls
+const WALL_TRIM := Color("2d1054")
+const WOOD_DARK := Color("1e0b36")
+const WOOD_MID := Color("3c126d") # Rich violet floor
+const WOOD_LIGHT := Color("511993")
+const FLOOR_SHADOW := Color("110524")
+const BRASS := Color("a44dfa") # Neon purple
+const BRASS_SOFT := Color("803cd1")
+const JADE := Color("00ebd6") # Neon turquoise
+const SON_RED := Color("ff3366")
+const CREAM := Color("f5f2ff")
+const MUTED := Color("8f7fa6")
 
 var labels: Array[Label] = []
 
@@ -164,8 +164,13 @@ func _draw_walk_paths() -> void:
 	draw_line(Vector2(576, 572), Vector2(660, 362), Color(JADE, 0.16), 3.0)
 
 func _draw_foreground_depth() -> void:
+	# Draw left half of foreground depth overlay
 	draw_colored_polygon(PackedVector2Array([
-		Vector2(0, 648), Vector2(60, 502), Vector2(576, 718), Vector2(1092, 502), Vector2(1152, 648), Vector2(1152, 720), Vector2(0, 720)
+		Vector2(0, 648), Vector2(60, 502), Vector2(576, 718), Vector2(576, 720), Vector2(0, 720)
+	]), Color(FLOOR_SHADOW, 0.36))
+	# Draw right half of foreground depth overlay
+	draw_colored_polygon(PackedVector2Array([
+		Vector2(576, 718), Vector2(1092, 502), Vector2(1152, 648), Vector2(1152, 720), Vector2(576, 720)
 	]), Color(FLOOR_SHADOW, 0.36))
 	draw_line(Vector2(0, 646), Vector2(1152, 646), Color(BRASS, 0.25), 2.0)
 
